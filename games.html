@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameNest - Games</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/games.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with back and exit buttons -->
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn-back" id="btnBack">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            <div class="header-center">
+                <h1>Choose Your Game</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn-exit" id="btnExit">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Games Grid -->
+        <main class="games-content">
+            <div class="games-grid">
+                <div class="game-card" data-game="snake">
+                    <div class="game-icon">
+                        <i class="fas fa-stroopwafel"></i>
+                    </div>
+                    <h3>Snake</h3>
+                    <p>Classic snake game with a modern twist</p>
+                    <div class="game-badge">Popular</div>
+                </div>
+                
+                <div class="game-card" data-game="draft">
+                    <div class="game-icon">
+                        <i class="fas fa-chess"></i>
+                    </div>
+                    <h3>Draft</h3>
+                    <p>Strategic drafting game</p>
+                </div>
+                
+                <div class="game-card" data-game="ludo">
+                    <div class="game-icon">
+                        <i class="fas fa-dice"></i>
+                    </div>
+                    <h3>Ludo</h3>
+                    <p>Classic board game for all ages</p>
+                </div>
+                
+                <div class="game-card" data-game="matchingcards">
+                    <div class="game-icon">
+                        <i class="fas fa-clone"></i>
+                    </div>
+                    <h3>Matching Cards</h3>
+                    <p>Test your memory with card matching</p>
+                </div>
+                
+                <div class="game-card" data-game="fruitsmatching">
+                    <div class="game-icon">
+                        <i class="fas fa-apple-alt"></i>
+                    </div>
+                    <h3>Fruits Matching</h3>
+                    <p>Match colorful fruits in this fun game</p>
+                </div>
+                
+                <div class="game-card" data-game="arrangingboxes">
+                    <div class="game-icon">
+                        <i class="fas fa-th"></i>
+                    </div>
+                    <h3>Arranging Boxes</h3>
+                    <p>Organize boxes in the correct order</p>
+                    <div class="game-badge">New</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bot Assistant -->
+        <div class="bot-container">
+            <button class="bot-toggle" id="botToggle">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="bot-assistant" id="botAssistant">
+                <div class="bot-header">
+                    <h3>MO11 - <a href="https://www.instagram.com/mo_little11?igsh=MTZsdWhpeXg5ZGttYQ%3D%3D&utm_source=qr">#1011</a></h3>
+                    <button class="bot-close" id="botClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="bot-content">
+                    <div class="bot-messages">
+                        <div class="bot-message">
+                            <p>Looking for game recommendations? I can help!</p>
+                        </div>
+                    </div>
+                    <div class="bot-questions">
+                        <button class="bot-question" data-question="snake-help">
+                            <span>How to play Snake?</span>
+                        </button>
+                        <button class="bot-question" data-question="recommendation">
+                            <span>Game recommendations</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Music -->
+        <audio id="backgroundMusic" loop>
+            <source src="assets/audio/background2.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <button class="music-toggle" id="musicToggle">
+            <i class="fas fa-volume-up"></i>
+        </button>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/games.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameNest - Welcome</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with back and exit buttons -->
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn-back" id="btnBack">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            <div class="header-right">
+                <button class="btn-exit" id="btnExit">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="welcome-content">
+            <div class="welcome-animation">
+                <div class="logo">
+                    <h1 class="logo-text">GameNest</h1>
+                    <div class="nest-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                </div>
+                <div class="floating-games">
+                    <div class="floating-game snake"></div>
+                    <div class="floating-game ludo"></div>
+                    <div class="floating-game cards"></div>
+                </div>
+            </div>
+            
+            <div class="welcome-message">
+                <h2>Welcome to GameNest!</h2>
+                <p>Your ultimate destination for fun and exciting games. Choose from our collection and start playing right away!</p>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn-primary" id="btnChooseGame">
+                    <span>Choose a Game</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="btn-secondary" id="btnExitMain">
+                    <span>Exit</span>
+                    <i class="fas fa-door-open"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Bot Assistant -->
+        <div class="bot-container">
+            <button class="bot-toggle" id="botToggle">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="bot-assistant" id="botAssistant">
+                <div class="bot-header">
+                    <h3>MO11 - <a href="https://www.instagram.com/mo_little11?igsh=MTZsdWhpeXg5ZGttYQ%3D%3D&utm_source=qr">#1011</a></h3>
+                    <button class="bot-close" id="botClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="bot-content">
+                    <div class="bot-messages">
+                        <div class="bot-message">
+                            <p>Hello! I'm MO11, your GameNest assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                    <div class="bot-questions">
+                        <button class="bot-question" data-question="about">
+                            <span>About GameNest?</span>
+                        </button>
+                        <button class="bot-question" data-question="how-to-play">
+                            <span>How to play?</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Music -->
+        <audio id="backgroundMusic" loop>
+            <source src="assets/audio/background.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <button class="music-toggle" id="musicToggle">
+            <i class="fas fa-volume-up"></i>
+        </button>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
