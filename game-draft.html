@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="assets/images/logo.png" type="image/png">
+    <title>Checkers Game - GameNest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --accent-color: #fd79a8;
+            --accent-glow: rgba(253, 121, 168, 0.6);
+            --dark-color: #2d3436;
+            --light-color: #dfe6e9;
+            --success-color: #00b894;
+            --success-glow: rgba(0, 184, 148, 0.6);
+            --warning-color: #fdcb6e;
+            --danger-color: #e17055;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --card-glow: rgba(255, 255, 255, 0.15);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --border-radius: 20px;
+            --transition: all 0.3s ease;
+            --game-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--game-bg);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(77, 201, 208, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fixed Navigation Buttons */
+        .fixed-back-btn, .fixed-exit-btn {
+            position: fixed;
+            top: 30px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+        }
+
+        .fixed-back-btn {
+            left: 30px;
+        }
+
+        .fixed-exit-btn {
+            right: 30px;
+        }
+
+        .fixed-back-btn:hover, .fixed-exit-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Header Styles */
+        .page-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-center h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(to right, #a29bfe, #fd79a8, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .header-center h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, #a29bfe, #fd79a8, #00b894);
+            border-radius: 3px;
+        }
+
+        /* Checkers Game Specific Styles */
+        .checkers-game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .game-title {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #00b894, #55efc4, #81ecec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 900;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .game-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 4px;
+            background: linear-gradient(to right, #00b894, #55efc4, #81ecec);
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            min-width: 120px;
+            text-align: center;
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #00b894;
+            text-shadow: 0 0 10px var(--success-glow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-area {
+            position: relative;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #gameBoard {
+            border-radius: var(--border-radius);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: block;
+            touch-action: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--card-shadow);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            border: 1px solid var(--card-glow);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:active {
+            transform: translateY(2px);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+            border: none;
+        }
+
+        .control-btn.primary:hover {
+            box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        .game-instructions {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            max-width: 550px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-instructions::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #00b894, #55efc4);
+        }
+
+        .game-instructions h3 {
+            margin-bottom: 15px;
+            color: #00b894;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+        }
+
+        .instructions-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .instructions-list li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .instructions-list li:before {
+            content: '▶';
+            color: #00b894;
+            font-size: 0.8rem;
+            position: absolute;
+            left: 0;
+            top: 2px;
+            text-shadow: 0 0 5px rgba(0, 184, 148, 0.7);
+        }
+
+        /* Game Over Modal */
+        .game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .game-over-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #fd79a8, #e17055);
+        }
+
+        .game-over-modal.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-content h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #fd79a8;
+            text-shadow: 0 0 10px var(--accent-glow);
+            font-weight: 800;
+        }
+
+        .final-score {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #00b894;
+            margin: 20px 0;
+            text-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        /* Game Setup Modal */
+        .game-setup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .setup-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .setup-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #00b894, #55efc4);
+        }
+
+        .setup-content h2 {
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            color: #00b894;
+            text-shadow: 0 0 10px var(--success-glow);
+            font-weight: 800;
+        }
+
+        .setup-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-group label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a29bfe;
+            text-align: left;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .color-option.white {
+            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
+            box-shadow: 0 5px 15px rgba(223, 230, 233, 0.4);
+        }
+
+        .color-option.black {
+            background: linear-gradient(135deg, #2d3436, #636e72);
+            box-shadow: 0 5px 15px rgba(45, 52, 54, 0.4);
+        }
+
+        .color-option.selected {
+            transform: scale(1.1);
+            border-color: #00b894;
+            box-shadow: 0 0 20px rgba(0, 184, 148, 0.7);
+        }
+
+        .level-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .level-option {
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .level-option:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .level-option.selected {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
+            border: none;
+        }
+
+        /* Game Mode Options */
+        .mode-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-option {
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .mode-option:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mode-option.selected {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+            border: none;
+        }
+
+        /* Bot Assistant Styles */
+        .bot-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .bot-toggle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 
+                0 6px 25px rgba(108, 92, 231, 0.5),
+                0 0 15px rgba(108, 92, 231, 0.6);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .bot-toggle:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 
+                0 8px 30px rgba(108, 92, 231, 0.7),
+                0 0 20px rgba(108, 92, 231, 0.8);
+        }
+
+        .bot-assistant {
+            position: absolute;
+            bottom: 90px;
+            right: 0;
+            width: 350px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            border: 1px solid var(--card-glow);
+        }
+
+        .bot-assistant.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .bot-header {
+            padding: 18px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-glow);
+        }
+
+        .bot-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .bot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bot-close:hover {
+            transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .bot-content {
+            padding: 25px;
+        }
+
+        .bot-messages {
+            margin-bottom: 25px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .bot-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .bot-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .bot-message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 18px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border-left: 3px solid #00b894;
+        }
+
+        .bot-message p {
+            margin: 0;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .bot-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bot-question {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            width: 100%;
+            border: 1px solid transparent;
+        }
+
+        .bot-question:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Music Toggle Styles */
+        .music-toggle {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .music-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .music-toggle.playing {
+            background: var(--accent-color);
+            animation: musicPulse 2s infinite;
+        }
+
+        /* Typing animation */
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background-color: white;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 
+                    0 6px 25px rgba(108, 92, 231, 0.5),
+                    0 0 15px rgba(108, 92, 231, 0.6);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 
+                    0 8px 30px rgba(108, 92, 231, 0.7),
+                    0 0 20px rgba(108, 92, 231, 0.8);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes musicPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(253, 121, 168, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(253, 121, 168, 0);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .game-title {
+                font-size: 2.2rem;
+            }
+            
+            .game-stats {
+                gap: 15px;
+            }
+            
+            .stat {
+                min-width: 100px;
+                padding: 12px 15px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 220px;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                padding: 25px;
+            }
+            
+            .bot-container {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .bot-assistant {
+                width: 300px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                top: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .fixed-back-btn {
+                left: 20px;
+            }
+            
+            .fixed-exit-btn {
+                right: 20px;
+            }
+            
+            .music-toggle {
+                bottom: 20px;
+                left: 20px;
+                width: 55px;
+                height: 55px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .checkers-game-container {
+                padding: 5px;
+            }
+            
+            .game-title {
+                font-size: 1.8rem;
+            }
+            
+            .stat {
+                min-width: 85px;
+                padding: 10px 12px;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .game-instructions {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .modal-content h2 {
+                font-size: 1.8rem;
+            }
+            
+            .final-score {
+                font-size: 2.5rem;
+            }
+            
+            .bot-container {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .bot-assistant {
+                width: 280px;
+            }
+            
+            .music-toggle {
+                bottom: 15px;
+                left: 15px;
+                width: 55px;
+                height: 55px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                top: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+            
+            .fixed-back-btn {
+                left: 15px;
+            }
+            
+            .fixed-exit-btn {
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .game-title {
+                font-size: 1.6rem;
+            }
+            
+            .game-stats {
+                gap: 10px;
+            }
+            
+            .stat {
+                min-width: 75px;
+                padding: 8px 10px;
+            }
+            
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            .control-btn {
+                width: 200px;
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+            
+            .bot-assistant {
+                width: 260px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Performance optimizations */
+        .checkers-game-container * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Particle effect for background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Fixed Navigation Buttons -->
+    <button class="fixed-back-btn" id="btnBack">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    
+    <button class="fixed-exit-btn" id="btnExit">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <div class="container">
+        <!-- Header with title only -->
+        <header class="page-header">
+            <div class="header-center">
+                <h1>Checkers Game</h1>
+            </div>
+        </header>
+
+        <!-- Checkers Game Content -->
+        <main class="checkers-game-container">
+            <div class="game-header">
+                <h2 class="game-title">Checkers Challenge</h2>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="player1Score">0</div>
+                        <div class="stat-label" id="player1Label">PLAYER 1</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="player2Score">0</div>
+                        <div class="stat-label" id="player2Label">PLAYER 2</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="level">1</div>
+                        <div class="stat-label">LEVEL</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-area">
+                <canvas id="gameBoard"></canvas>
+            </div>
+
+            <div class="game-controls">
+                <button class="control-btn primary" id="btnNewGame">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>New Game</span>
+                </button>
+                <button class="control-btn" id="btnUndo">
+                    <i class="fas fa-undo"></i>
+                    <span>Undo Move</span>
+                </button>
+                <button class="control-btn" id="btnHint">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Hint</span>
+                </button>
+            </div>
+
+            <div class="game-instructions">
+                <h3>How to Play Checkers</h3>
+                <ul class="instructions-list">
+                    <li>Move your pieces diagonally to adjacent dark squares</li>
+                    <li>Capture opponent pieces by jumping over them</li>
+                    <li>King your pieces by reaching the opposite end of the board</li>
+                    <li>Kings can move and capture both forward and backward</li>
+                    <li>You must capture if a capture is available</li>
+                    <li>The game ends when a player cannot make a move</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="game-over-modal" id="gameOverModal">
+            <div class="modal-content">
+                <h2 id="gameResult">Game Over!</h2>
+                <p id="gameResultText">Your checkers game has ended</p>
+                <div class="final-score" id="finalScore">0</div>
+                <div class="modal-buttons">
+                    <button class="control-btn primary" id="btnPlayAgain">
+                        <i class="fas fa-redo"></i>
+                        <span>Play Again</span>
+                    </button>
+                    <button class="control-btn" id="btnBackToGames">
+                        <i class="fas fa-home"></i>
+                        <span>Back to Games</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Setup Modal -->
+        <div class="game-setup-modal" id="gameSetupModal">
+            <div class="setup-content">
+                <h2>Game Setup</h2>
+                <div class="setup-options">
+                    <div class="option-group">
+                        <label>Choose Game Mode:</label>
+                        <div class="mode-options">
+                            <div class="mode-option selected" data-mode="vsComputer">
+                                <i class="fas fa-robot"></i>
+                                <span>VS Computer</span>
+                            </div>
+                            <div class="mode-option" data-mode="twoPlayer">
+                                <i class="fas fa-users"></i>
+                                <span>Two Players</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label>Choose Your Color:</label>
+                        <div class="color-options">
+                            <div class="color-option white" data-color="white">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="color-option black selected" data-color="black">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="option-group" id="difficultyGroup">
+                        <label>Select Difficulty Level:</label>
+                        <div class="level-options">
+                            <div class="level-option selected" data-level="1">Easy</div>
+                            <div class="level-option" data-level="2">Medium</div>
+                            <div class="level-option" data-level="3">Hard</div>
+                            <div class="level-option" data-level="4">Expert</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="control-btn primary" id="btnStartGame">
+                    <i class="fas fa-play"></i>
+                    <span>Start Game</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bot Assistant -->
+        <div class="bot-container">
+            <button class="bot-toggle" id="botToggle">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="bot-assistant" id="botAssistant">
+                <div class="bot-header">
+                    <h3>MO11 - <a href="https://www.instagram.com/mo_little11?igsh=MTZsdWhpeXg5ZGttYQ%3D%3D&utm_source=qr" style="color: #fd79a8; text-decoration: none;">#1011</a></h3>
+                    <button class="bot-close" id="botClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="bot-content">
+                    <div class="bot-messages">
+                        <div class="bot-message">
+                            <p>Need help with Checkers? I can assist you!</p>
+                        </div>
+                    </div>
+                    <div class="bot-questions">
+                        <button class="bot-question" data-question="checkers-rules">
+                            <span>What are the basic rules?</span>
+                        </button>
+                        <button class="bot-question" data-question="checkers-strategy">
+                            <span>Winning strategies</span>
+                        </button>
+                        <button class="bot-question" data-question="checkers-kings">
+                            <span>How do kings work?</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Music -->
+        <audio id="backgroundMusic" loop>
+            <source src="assets/audio/background2.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <button class="music-toggle" id="musicToggle">
+            <i class="fas fa-volume-up"></i>
+        </button>
+
+        <!-- Game Sounds -->
+        <audio id="moveSound" preload="auto">
+            <source src="assets/audio/checkers-move.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="captureSound" preload="auto">
+            <source src="assets/audio/eating.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="kingSound" preload="auto">
+            <source src="assets/audio/king.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="gameOverSound" preload="auto">
+            <source src="assets/audio/game-over.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ===== GAME VARIABLES =====
+            const canvas = document.getElementById('gameBoard');
+            const ctx = canvas.getContext('2d');
+            const player1ScoreElement = document.getElementById('player1Score');
+            const player2ScoreElement = document.getElementById('player2Score');
+            const player1LabelElement = document.getElementById('player1Label');
+            const player2LabelElement = document.getElementById('player2Label');
+            const levelElement = document.getElementById('level');
+            const gameOverModal = document.getElementById('gameOverModal');
+            const gameSetupModal = document.getElementById('gameSetupModal');
+            const gameResultElement = document.getElementById('gameResult');
+            const gameResultTextElement = document.getElementById('gameResultText');
+            const finalScoreElement = document.getElementById('finalScore');
+            const difficultyGroup = document.getElementById('difficultyGroup');
+            
+            // Game state
+            let board = [];
+            let selectedPiece = null;
+            let validMoves = [];
+            let player1Color = 'black';
+            let player2Color = 'white';
+            let currentPlayer = 'black';
+            let player1Score = 0;
+            let player2Score = 0;
+            let gameLevel = 1;
+            let gameActive = false;
+            let moveHistory = [];
+            let multiCaptureActive = false;
+            let multiCapturePiece = null;
+            let lastMoveFrom = null;
+            let gameMode = 'vsComputer'; // 'vsComputer' or 'twoPlayer'
+            
+            // Board dimensions
+            const boardSize = 8;
+            let cellSize;
+            let boardOffsetX, boardOffsetY;
+            
+            // Bot typing state
+            let isBotTyping = false;
+            
+            // ===== GAME FUNCTIONS =====
+            function initGame() {
+                const maxSize = Math.min(400, window.innerWidth - 40, window.innerHeight - 300);
+                const calculatedCellSize = Math.floor(maxSize / boardSize);
+                const optimalSize = calculatedCellSize * boardSize;
+                
+                canvas.width = optimalSize;
+                canvas.height = optimalSize;
+                cellSize = optimalSize / boardSize;
+                
+                boardOffsetX = (canvas.width - optimalSize) / 2;
+                boardOffsetY = (canvas.height - optimalSize) / 2;
+                
+                player1ScoreElement.textContent = player1Score;
+                player2ScoreElement.textContent = player2Score;
+                levelElement.textContent = gameLevel;
+                
+                // Update player labels based on game mode
+                if (gameMode === 'vsComputer') {
+                    player1LabelElement.textContent = 'PLAYER';
+                    player2LabelElement.textContent = 'COMPUTER';
+                } else {
+                    player1LabelElement.textContent = 'PLAYER 1';
+                    player2LabelElement.textContent = 'PLAYER 2';
+                }
+                
+                initializeBoard();
+                drawBoard();
+            }
+            
+            function initializeBoard() {
+                board = [];
+                
+                // Initialize empty board
+                for (let row = 0; row < boardSize; row++) {
+                    board[row] = [];
+                    for (let col = 0; col < boardSize; col++) {
+                        board[row][col] = null;
+                    }
+                }
+                
+                // Set up pieces
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        if ((row + col) % 2 === 1) {
+                            board[row][col] = { color: 'white', isKing: false };
+                        }
+                    }
+                }
+                
+                for (let row = 5; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        if ((row + col) % 2 === 1) {
+                            board[row][col] = { color: 'black', isKing: false };
+                        }
+                    }
+                }
+                
+                // Reset game state
+                selectedPiece = null;
+                validMoves = [];
+                currentPlayer = player1Color;
+                moveHistory = [];
+                multiCaptureActive = false;
+                multiCapturePiece = null;
+                lastMoveFrom = null;
+                gameActive = true;
+            }
+            
+            function drawBoard() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw board background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw board squares and pieces
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const x = boardOffsetX + col * cellSize;
+                        const y = boardOffsetY + row * cellSize;
+                        
+                        // Draw square
+                        ctx.fillStyle = (row + col) % 2 === 0 ? '#b58863' : '#f0d9b5';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                        
+                        // Draw piece if exists
+                        const piece = board[row][col];
+                        if (piece) {
+                            drawPiece(x, y, piece);
+                        }
+                    }
+                }
+                
+                // Highlight last move's starting position
+                if (lastMoveFrom) {
+                    const { row, col } = lastMoveFrom;
+                    const x = boardOffsetX + col * cellSize;
+                    const y = boardOffsetY + row * cellSize;
+                    
+                    ctx.strokeStyle = '#fdcb6e';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    
+                    // Add a subtle glow effect
+                    ctx.shadowColor = '#fdcb6e';
+                    ctx.shadowBlur = 10;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Highlight selected piece and valid moves
+                if (selectedPiece) {
+                    const { row, col } = selectedPiece;
+                    const x = boardOffsetX + col * cellSize;
+                    const y = boardOffsetY + row * cellSize;
+                    
+                    ctx.strokeStyle = '#00b894';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    
+                    // Add glow effect to selected piece
+                    ctx.shadowColor = '#00b894';
+                    ctx.shadowBlur = 15;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.fillStyle = 'rgba(0, 184, 148, 0.3)';
+                    for (const move of validMoves) {
+                        const moveX = boardOffsetX + move.col * cellSize;
+                        const moveY = boardOffsetY + move.row * cellSize;
+                        
+                        // Draw move indicator
+                        ctx.beginPath();
+                        ctx.arc(moveX + cellSize/2, moveY + cellSize/2, cellSize/4, 0, Math.PI * 2);
+                        ctx.fillStyle = move.isCapture ? '#fd79a8' : '#00b894';
+                        ctx.fill();
+                        
+                        // Add border to capture moves
+                        if (move.isCapture) {
+                            ctx.strokeStyle = '#fd79a8';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(moveX, moveY, cellSize, cellSize);
+                        }
+                    }
+                }
+                
+                // Highlight pieces that must capture (only for human players)
+                if ((currentPlayer === player1Color || (gameMode === 'twoPlayer' && currentPlayer === player2Color)) && !multiCaptureActive) {
+                    const capturePieces = getAllCapturePieces();
+                    for (const piece of capturePieces) {
+                        const x = boardOffsetX + piece.col * cellSize;
+                        const y = boardOffsetY + piece.row * cellSize;
+                        
+                        ctx.strokeStyle = '#fd79a8';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                        
+                        // Add pulsing effect for mandatory capture pieces
+                        ctx.shadowColor = '#fd79a8';
+                        ctx.shadowBlur = 15;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+                
+                // Draw current player indicator
+                let playerText = '';
+                if (gameMode === 'vsComputer') {
+                    if (currentPlayer === player1Color) {
+                        playerText = multiCaptureActive ? 'Continue Capturing!' : 'Your Turn';
+                    } else {
+                        playerText = multiCaptureActive ? 'Computer Capturing...' : 'Computer Thinking...';
+                    }
+                } else {
+                    if (currentPlayer === player1Color) {
+                        playerText = multiCaptureActive ? 'Player 1 - Continue Capturing!' : 'Player 1 Turn';
+                    } else {
+                        playerText = multiCaptureActive ? 'Player 2 - Continue Capturing!' : 'Player 2 Turn';
+                    }
+                }
+                
+                ctx.fillStyle = currentPlayer === player1Color ? 'rgba(0, 184, 148, 0.7)' : 'rgba(253, 121, 168, 0.7)';
+                ctx.beginPath();
+                ctx.arc(boardOffsetX + canvas.width / 2, boardOffsetY - 20, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Poppins';
+                ctx.textAlign = 'center';
+                ctx.fillText(playerText, boardOffsetX + canvas.width / 2, boardOffsetY - 25);
+            }
+            
+            function drawPiece(x, y, piece) {
+                const centerX = x + cellSize / 2;
+                const centerY = y + cellSize / 2;
+                const radius = cellSize / 2 - 5;
+                
+                // Draw piece base
+                const gradient = ctx.createRadialGradient(
+                    centerX - radius/3, centerY - radius/3, 0,
+                    centerX, centerY, radius
+                );
+                
+                if (piece.color === 'white') {
+                    gradient.addColorStop(0, '#f0f0f0');
+                    gradient.addColorStop(1, '#c0c0c0');
+                } else {
+                    gradient.addColorStop(0, '#606060');
+                    gradient.addColorStop(1, '#303030');
+                }
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Draw piece border
+                ctx.strokeStyle = piece.color === 'white' ? '#a0a0a0' : '#101010';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw king crown
+                if (piece.isKing) {
+                    ctx.fillStyle = '#fdcb6e';
+                    ctx.font = `${cellSize/2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('♔', centerX, centerY);
+                    
+                    // Add glow effect for kings
+                    ctx.shadowColor = '#fdcb6e';
+                    ctx.shadowBlur = 10;
+                    ctx.fillText('♔', centerX, centerY);
+                    ctx.shadowBlur = 0;
+                }
+            }
+            
+            // Check if any capture moves are available for current player
+            function hasAnyCaptureMoves() {
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const piece = board[row][col];
+                        if (piece && piece.color === currentPlayer) {
+                            const captureMoves = getCaptureMoves(row, col, piece);
+                            if (captureMoves.length > 0) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // Get all pieces that have capture moves
+            function getAllCapturePieces() {
+                const capturePieces = [];
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const piece = board[row][col];
+                        if (piece && piece.color === currentPlayer) {
+                            const captureMoves = getCaptureMoves(row, col, piece);
+                            if (captureMoves.length > 0) {
+                                capturePieces.push({ row, col });
+                            }
+                        }
+                    }
+                }
+                return capturePieces;
+            }
+            
+            function getValidMoves(row, col) {
+                const piece = board[row][col];
+                if (!piece || piece.color !== currentPlayer) return [];
+                
+                // If multi-capture is active, only allow moves for the capturing piece
+                if (multiCaptureActive && multiCapturePiece) {
+                    if (row !== multiCapturePiece.row || col !== multiCapturePiece.col) {
+                        return [];
+                    }
+                    return getCaptureMoves(row, col, piece);
+                }
+                
+                // If there are any capture moves available on the board, only allow captures
+                if (hasAnyCaptureMoves()) {
+                    return getCaptureMoves(row, col, piece);
+                }
+                
+                // Otherwise, allow regular moves
+                return getRegularMoves(row, col, piece);
+            }
+            
+            function getRegularMoves(row, col, piece) {
+                const moves = [];
+                const directions = [];
+                
+                if (piece.isKing) {
+                    directions.push([-1, -1], [-1, 1], [1, -1], [1, 1]);
+                } else if (piece.color === 'white') {
+                    directions.push([1, -1], [1, 1]);
+                } else {
+                    directions.push([-1, -1], [-1, 1]);
+                }
+                
+                for (const [dr, dc] of directions) {
+                    let newRow = row + dr;
+                    let newCol = col + dc;
+                    
+                    // For kings, check all positions along the diagonal
+                    while (piece.isKing && isValidPosition(newRow, newCol)) {
+                        if (board[newRow][newCol] === null) {
+                            moves.push({ row: newRow, col: newCol, isCapture: false });
+                            newRow += dr;
+                            newCol += dc;
+                        } else {
+                            break; // Stop if we hit a piece
+                        }
+                    }
+                    
+                    // For regular pieces, only check adjacent position
+                    if (!piece.isKing && isValidPosition(newRow, newCol) && board[newRow][newCol] === null) {
+                        moves.push({ row: newRow, col: newCol, isCapture: false });
+                    }
+                }
+                
+                return moves;
+            }
+            
+            function getCaptureMoves(row, col, piece) {
+                const moves = [];
+                const directions = [];
+                
+                if (piece.isKing) {
+                    directions.push([-1, -1], [-1, 1], [1, -1], [1, 1]);
+                } else if (piece.color === 'white') {
+                    directions.push([1, -1], [1, 1]);
+                } else {
+                    directions.push([-1, -1], [-1, 1]);
+                }
+                
+                for (const [dr, dc] of directions) {
+                    // For kings, we need to check all possible capture positions along the diagonal
+                    if (piece.isKing) {
+                        let currentRow = row + dr;
+                        let currentCol = col + dc;
+                        let foundOpponent = false;
+                        
+                        // Look for an opponent piece to capture
+                        while (isValidPosition(currentRow, currentCol)) {
+                            if (board[currentRow][currentCol] !== null) {
+                                if (board[currentRow][currentCol].color !== piece.color) {
+                                    foundOpponent = true;
+                                    // Now look for an empty space after the opponent
+                                    let jumpRow = currentRow + dr;
+                                    let jumpCol = currentCol + dc;
+                                    
+                                    while (isValidPosition(jumpRow, jumpCol) && board[jumpRow][jumpCol] === null) {
+                                        moves.push({ 
+                                            row: jumpRow, 
+                                            col: jumpCol, 
+                                            isCapture: true,
+                                            captureRow: currentRow,
+                                            captureCol: currentCol
+                                        });
+                                        jumpRow += dr;
+                                        jumpCol += dc;
+                                    }
+                                    break; // Only one capture per direction for kings
+                                } else {
+                                    break; // Can't jump over own piece
+                                }
+                            }
+                            currentRow += dr;
+                            currentCol += dc;
+                        }
+                    } else {
+                        // Regular piece capture logic
+                        const jumpRow = row + dr * 2;
+                        const jumpCol = col + dc * 2;
+                        const captureRow = row + dr;
+                        const captureCol = col + dc;
+                        
+                        if (isValidPosition(jumpRow, jumpCol) && 
+                            board[jumpRow][jumpCol] === null &&
+                            isValidPosition(captureRow, captureCol) &&
+                            board[captureRow][captureCol] !== null &&
+                            board[captureRow][captureCol].color !== piece.color) {
+                            
+                            moves.push({ 
+                                row: jumpRow, 
+                                col: jumpCol, 
+                                isCapture: true,
+                                captureRow: captureRow,
+                                captureCol: captureCol
+                            });
+                        }
+                    }
+                }
+                
+                return moves;
+            }
+            
+            function isValidPosition(row, col) {
+                return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+            }
+            
+            function handlePieceSelection(row, col) {
+                // In two-player mode, both players are human
+                // In vsComputer mode, only player1 (human) can select pieces
+                if (!gameActive) return;
+                
+                if (gameMode === 'vsComputer' && currentPlayer !== player1Color) return;
+                
+                const piece = board[row][col];
+                
+                // If a piece is already selected, try to move it
+                if (selectedPiece) {
+                    const move = validMoves.find(m => m.row === row && m.col === col);
+                    if (move) {
+                        makeMove(selectedPiece.row, selectedPiece.col, row, col, move.isCapture, move.captureRow, move.captureCol);
+                        return;
+                    }
+                }
+                
+                // Select a new piece if it belongs to the current player
+                if (piece && piece.color === currentPlayer) {
+                    const moves = getValidMoves(row, col);
+                    
+                    // Enforce mandatory capture rule
+                    if (hasAnyCaptureMoves() && moves.length === 0 && !multiCaptureActive) {
+                        alert("You must capture with one of the highlighted pieces!");
+                        return;
+                    }
+                    
+                    if (moves.length > 0) {
+                        selectedPiece = { row, col };
+                        validMoves = moves;
+                        drawBoard();
+                    }
+                } else {
+                    selectedPiece = null;
+                    validMoves = [];
+                    drawBoard();
+                }
+            }
+            
+            function makeMove(fromRow, fromCol, toRow, toCol, isCapture, captureRow, captureCol) {
+                // Save move to history
+                moveHistory.push({
+                    fromRow, fromCol, toRow, toCol, 
+                    isCapture, captureRow, captureCol,
+                    capturedPiece: isCapture ? board[captureRow][captureCol] : null,
+                    wasKing: board[fromRow][fromCol].isKing,
+                    multiCaptureActive: multiCaptureActive,
+                    multiCapturePiece: multiCaptureActive ? {...multiCapturePiece} : null
+                });
+                
+                // Store the starting position for visual highlighting
+                lastMoveFrom = { row: fromRow, col: fromCol };
+                
+                // Move the piece
+                board[toRow][toCol] = board[fromRow][fromCol];
+                board[fromRow][fromCol] = null;
+                
+                // Remove captured piece if applicable
+                if (isCapture) {
+                    board[captureRow][captureCol] = null;
+                    playSound('captureSound');
+                    
+                    // Update score
+                    if (currentPlayer === player1Color) {
+                        player1Score += 5;
+                        player1ScoreElement.textContent = player1Score;
+                    } else {
+                        player2Score += 5;
+                        player2ScoreElement.textContent = player2Score;
+                    }
+                    
+                    // Check for additional captures
+                    const additionalCaptures = getCaptureMoves(toRow, toCol, board[toRow][toCol]);
+                    if (additionalCaptures.length > 0) {
+                        // Player must continue capturing with the same piece
+                        multiCaptureActive = true;
+                        multiCapturePiece = { row: toRow, col: toCol };
+                        
+                        // If it's the computer's turn, set up for the next capture
+                        if (gameMode === 'vsComputer' && currentPlayer === player2Color) {
+                            // For computer, we don't need to set selectedPiece, just continue the multi-capture
+                            drawBoard();
+                            setTimeout(computerMove, 800);
+                            return;
+                        } else {
+                            // For human player, set selection for next capture
+                            selectedPiece = { row: toRow, col: toCol };
+                            validMoves = additionalCaptures;
+                            drawBoard();
+                            return;
+                        }
+                    }
+                } else {
+                    playSound('moveSound');
+                }
+                
+                // Check for king promotion
+                if (!board[toRow][toCol].isKing) {
+                    if ((board[toRow][toCol].color === 'white' && toRow === boardSize - 1) ||
+                        (board[toRow][toCol].color === 'black' && toRow === 0)) {
+                        board[toRow][toCol].isKing = true;
+                        playSound('kingSound');
+                    }
+                }
+                
+                // Reset selection and multi-capture state
+                selectedPiece = null;
+                validMoves = [];
+                multiCaptureActive = false;
+                multiCapturePiece = null;
+                
+                // Switch player
+                currentPlayer = currentPlayer === player1Color ? player2Color : player1Color;
+                drawBoard();
+                
+                // Check for game over
+                if (isGameOver()) {
+                    endGame();
+                    return;
+                }
+                
+                // Computer's turn (only in vsComputer mode)
+                if (gameMode === 'vsComputer' && currentPlayer === player2Color && gameActive) {
+                    setTimeout(computerMove, 800);
+                }
+            }
+            
+            function computerMove() {
+                if (!gameActive || currentPlayer !== player2Color || gameMode !== 'vsComputer') return;
+                
+                // Handle multi-capture for computer
+                if (multiCaptureActive && multiCapturePiece) {
+                    const { row, col } = multiCapturePiece;
+                    const piece = board[row][col];
+                    const captureMoves = getCaptureMoves(row, col, piece);
+                    
+                    if (captureMoves.length > 0) {
+                        // Continue the multi-capture
+                        const selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+                        makeMove(
+                            row, col, 
+                            selectedMove.row, selectedMove.col, 
+                            selectedMove.isCapture,
+                            selectedMove.captureRow,
+                            selectedMove.captureCol
+                        );
+                        return;
+                    } else {
+                        // End multi-capture and switch turns
+                        multiCaptureActive = false;
+                        multiCapturePiece = null;
+                        currentPlayer = player1Color;
+                        drawBoard();
+                        return;
+                    }
+                }
+                
+                // Find all possible moves for computer
+                const allMoves = [];
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const piece = board[row][col];
+                        if (piece && piece.color === player2Color) {
+                            const moves = getValidMoves(row, col);
+                            for (const move of moves) {
+                                allMoves.push({
+                                    fromRow: row,
+                                    fromCol: col,
+                                    toRow: move.row,
+                                    toCol: move.col,
+                                    isCapture: move.isCapture,
+                                    captureRow: move.captureRow,
+                                    captureCol: move.captureCol
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                if (allMoves.length === 0) {
+                    endGame();
+                    return;
+                }
+                
+                // Prioritize capture moves
+                const captureMoves = allMoves.filter(move => move.isCapture);
+                const movesToUse = captureMoves.length > 0 ? captureMoves : allMoves;
+                
+                // Select a random move
+                const selectedMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
+                
+                // Make the selected move
+                makeMove(
+                    selectedMove.fromRow, 
+                    selectedMove.fromCol, 
+                    selectedMove.toRow, 
+                    selectedMove.toCol, 
+                    selectedMove.isCapture,
+                    selectedMove.captureRow,
+                    selectedMove.captureCol
+                );
+            }
+            
+            function isGameOver() {
+                // Check if current player has any valid moves
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const piece = board[row][col];
+                        if (piece && piece.color === currentPlayer && getValidMoves(row, col).length > 0) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            function endGame() {
+                gameActive = false;
+                playSound('gameOverSound');
+                
+                const winner = currentPlayer === player1Color ? player2Color : player1Color;
+                const isPlayer1Win = winner === player1Color;
+                
+                if (gameMode === 'vsComputer') {
+                    gameResultElement.textContent = isPlayer1Win ? 'You Win!' : 'Computer Wins!';
+                    gameResultTextElement.textContent = isPlayer1Win ? 
+                        'Congratulations! You outsmarted the computer.' : 
+                        'The computer was too strong this time. Try again!';
+                } else {
+                    gameResultElement.textContent = isPlayer1Win ? 'Player 1 Wins!' : 'Player 2 Wins!';
+                    gameResultTextElement.textContent = isPlayer1Win ? 
+                        'Congratulations Player 1! You won the game.' : 
+                        'Congratulations Player 2! You won the game.';
+                }
+                
+                finalScoreElement.textContent = isPlayer1Win ? player1Score : player2Score;
+                gameOverModal.classList.add('active');
+            }
+            
+            function playSound(soundId) {
+                const sound = document.getElementById(soundId);
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.log("Sound play prevented:", e));
+                }
+            }
+            
+            function undoMove() {
+                if (moveHistory.length === 0 || !gameActive) return;
+                
+                const lastMove = moveHistory.pop();
+                
+                // Restore the piece to its original position
+                board[lastMove.fromRow][lastMove.fromCol] = board[lastMove.toRow][lastMove.toCol];
+                board[lastMove.toRow][lastMove.toCol] = null;
+                
+                // Restore captured piece if applicable
+                if (lastMove.isCapture) {
+                    board[lastMove.captureRow][lastMove.captureCol] = lastMove.capturedPiece;
+                    
+                    // Update score
+                    if (currentPlayer === player2Color) {
+                        player1Score -= 5;
+                        player1ScoreElement.textContent = player1Score;
+                    } else {
+                        player2Score -= 5;
+                        player2ScoreElement.textContent = player2Score;
+                    }
+                }
+                
+                // Restore king status
+                board[lastMove.fromRow][lastMove.fromCol].isKing = lastMove.wasKing;
+                
+                // Restore multi-capture state
+                multiCaptureActive = lastMove.multiCaptureActive;
+                multiCapturePiece = lastMove.multiCapturePiece;
+                
+                // Update last move from position
+                if (moveHistory.length > 0) {
+                    const prevMove = moveHistory[moveHistory.length - 1];
+                    lastMoveFrom = { row: prevMove.fromRow, col: prevMove.fromCol };
+                } else {
+                    lastMoveFrom = null;
+                }
+                
+                // Switch back to the previous player
+                currentPlayer = currentPlayer === player1Color ? player2Color : player1Color;
+                
+                // Redraw the board
+                drawBoard();
+            }
+            
+            function showHint() {
+                if (!gameActive || (gameMode === 'vsComputer' && currentPlayer !== player1Color)) return;
+                
+                // Find all possible moves for current player
+                const allMoves = [];
+                for (let row = 0; row < boardSize; row++) {
+                    for (let col = 0; col < boardSize; col++) {
+                        const piece = board[row][col];
+                        if (piece && piece.color === currentPlayer) {
+                            const moves = getValidMoves(row, col);
+                            for (const move of moves) {
+                                allMoves.push({
+                                    fromRow: row,
+                                    fromCol: col,
+                                    toRow: move.row,
+                                    toCol: move.col,
+                                    isCapture: move.isCapture
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                if (allMoves.length === 0) return;
+                
+                // Prioritize capture moves
+                const captureMoves = allMoves.filter(move => move.isCapture);
+                const movesToUse = captureMoves.length > 0 ? captureMoves : allMoves;
+                
+                // Select a random move
+                const hintMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
+                
+                // Highlight the suggested move
+                selectedPiece = { row: hintMove.fromRow, col: hintMove.fromCol };
+                validMoves = [{ row: hintMove.toRow, col: hintMove.toCol, isCapture: hintMove.isCapture }];
+                
+                drawBoard();
+                
+                // Remove highlight after a delay
+                setTimeout(() => {
+                    selectedPiece = null;
+                    validMoves = [];
+                    drawBoard();
+                }, 2000);
+            }
+            
+            // Bot typing function
+            function typeMessage(message, messageDiv, callback) {
+                if (isBotTyping) return;
+                
+                isBotTyping = true;
+                let index = 0;
+                messageDiv.innerHTML = '';
+                
+                const typingInterval = setInterval(() => {
+                    if (index < message.length) {
+                        messageDiv.innerHTML += message.charAt(index);
+                        index++;
+                        
+                        // Scroll to bottom of messages
+                        const messages = document.querySelector('.bot-messages');
+                        messages.scrollTop = messages.scrollHeight;
+                    } else {
+                        clearInterval(typingInterval);
+                        isBotTyping = false;
+                        if (callback) callback();
+                    }
+                }, 30); // Adjust typing speed here (milliseconds per character)
+            }
+            
+            // ===== EVENT LISTENERS =====
+            document.getElementById('btnNewGame').addEventListener('click', function() {
+                gameSetupModal.style.display = 'flex';
+            });
+            
+            document.getElementById('btnUndo').addEventListener('click', undoMove);
+            document.getElementById('btnHint').addEventListener('click', showHint);
+            
+            // Game mode selection
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    gameMode = this.getAttribute('data-mode');
+                    
+                    // Show/hide difficulty options based on game mode
+                    if (gameMode === 'vsComputer') {
+                        difficultyGroup.style.display = 'flex';
+                    } else {
+                        difficultyGroup.style.display = 'none';
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    player1Color = this.getAttribute('data-color');
+                    player2Color = player1Color === 'white' ? 'black' : 'white';
+                });
+            });
+            
+            document.querySelectorAll('.level-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.level-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    gameLevel = parseInt(this.getAttribute('data-level'));
+                });
+            });
+            
+            document.getElementById('btnStartGame').addEventListener('click', function() {
+                gameSetupModal.style.display = 'none';
+                player1Score = 0;
+                player2Score = 0;
+                initializeBoard();
+                drawBoard();
+            });
+            
+            document.getElementById('btnPlayAgain').addEventListener('click', function() {
+                gameOverModal.classList.remove('active');
+                initializeBoard();
+                drawBoard();
+            });
+            
+            document.getElementById('btnBackToGames').addEventListener('click', function() {
+                window.location.href = 'games.html';
+            });
+            
+            document.getElementById('btnBack').addEventListener('click', function() {
+                window.location.href = 'games.html';
+            });
+            
+            document.getElementById('btnExit').addEventListener('click', function() {
+                if (confirm('Are you sure you want to exit GameNest?')) {
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            canvas.addEventListener('click', function(event) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                const col = Math.floor((x - boardOffsetX) / cellSize);
+                const row = Math.floor((y - boardOffsetY) / cellSize);
+                
+                if (row >= 0 && row < boardSize && col >= 0 && col < boardSize) {
+                    handlePieceSelection(row, col);
+                }
+            });
+            
+            // Bot Assistant Functionality
+            document.getElementById('botToggle').addEventListener('click', function() {
+                document.getElementById('botAssistant').classList.toggle('active');
+            });
+            
+            document.getElementById('botClose').addEventListener('click', function() {
+                document.getElementById('botAssistant').classList.remove('active');
+            });
+            
+            // Music Toggle Functionality
+            const musicToggle = document.getElementById('musicToggle');
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            
+            // Auto-play background music on page load
+            window.addEventListener('load', function() {
+                // Try to play background music automatically
+                const playPromise = backgroundMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        // Auto-play started successfully
+                        musicToggle.classList.add('playing');
+                    }).catch(error => {
+                        // Auto-play was prevented, show the play button
+                        console.log("Auto-play prevented:", error);
+                        musicToggle.classList.remove('playing');
+                    });
+                }
+            });
+            
+            musicToggle.addEventListener('click', function() {
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play();
+                    musicToggle.classList.add('playing');
+                } else {
+                    backgroundMusic.pause();
+                    musicToggle.classList.remove('playing');
+                }
+            });
+            
+            // Bot Questions
+            document.querySelectorAll('.bot-question').forEach(button => {
+                button.addEventListener('click', function() {
+                    const question = this.getAttribute('data-question');
+                    const messages = document.querySelector('.bot-messages');
+                    
+                    let response = '';
+                    switch(question) {
+                        case 'checkers-rules':
+                            response = 'Checkers is played on an 8x8 board. Players take turns moving their pieces diagonally. You capture by jumping over your opponent\'s pieces. If you reach the opposite end, your piece becomes a king and can move backwards.';
+                            break;
+                        case 'checkers-strategy':
+                            response = 'Good strategies include controlling the center, creating multiple threats, and forcing your opponent into positions where they must give up pieces. Try to keep your pieces together for defense and create kings as soon as possible.';
+                            break;
+                        case 'checkers-kings':
+                            response = 'Kings are created when a piece reaches the opposite end of the board. Kings can move and capture both forward and backward, making them much more powerful than regular pieces. Kings can move any distance along diagonals and capture pieces anywhere along those diagonals.';
+                            break;
+                    }
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'bot-message';
+                    messages.appendChild(messageDiv);
+                    
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'bot-message';
+                    typingIndicator.innerHTML = '<p>MO11 is typing<span class="typing-cursor"></span></p>';
+                    messages.appendChild(typingIndicator);
+                    messages.scrollTop = messages.scrollHeight;
+                    
+                    // Remove typing indicator and type the actual message
+                    setTimeout(() => {
+                        messages.removeChild(typingIndicator);
+                        typeMessage(response, messageDiv);
+                    }, 1000);
+                });
+            });
+            
+            // Create background particles
+            function createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const particleCount = 30;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    const size = Math.random() * 5 + 2;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    
+                    particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                    particle.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            
+            // ===== INITIALIZATION =====
+            initGame();
+            createParticles();
+            window.addEventListener('resize', initGame);
+        });
+    </script>
+</body>
+</html>
