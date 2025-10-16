@@ -532,6 +532,7 @@
                     </div>
                     <h3>Ludo</h3>
                     <p>Classic board game for all ages</p>
+                    <div class="game-badge">Milah11 Special</div>
                 </div>
                 
                 <div class="game-card" data-game="matchingcards">
@@ -761,8 +762,7 @@
             gameCards.forEach(card => {
                 card.addEventListener('click', function() {
                     const game = this.getAttribute('data-game');
-                    // In a real application, this would start the selected game
-                    alert(`Starting ${game} game!`);
+                    
                     window.location.href = `game-${game}.html`;
                 });
             });
