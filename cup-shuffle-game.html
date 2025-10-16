@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" href="assets/images/logo.png" type="image/png">
+    <title>3D Cup Shuffle Game - GameNest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --accent-color: #fd79a8;
+            --accent-glow: rgba(253, 121, 168, 0.6);
+            --dark-color: #2d3436;
+            --light-color: #dfe6e9;
+            --success-color: #00b894;
+            --success-glow: rgba(0, 184, 148, 0.6);
+            --warning-color: #fdcb6e;
+            --danger-color: #e17055;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --card-glow: rgba(255, 255, 255, 0.15);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --border-radius: 20px;
+            --transition: all 0.3s ease;
+            --game-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--game-bg);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(77, 201, 208, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fixed Navigation Buttons */
+        .fixed-back-btn, .fixed-exit-btn {
+            position: fixed;
+            top: 30px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+        }
+
+        .fixed-back-btn {
+            left: 30px;
+        }
+
+        .fixed-exit-btn {
+            right: 30px;
+        }
+
+        .fixed-back-btn:hover, .fixed-exit-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Header Styles */
+        .page-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-center h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(to right, #a29bfe, #fd79a8, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .header-center h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, #a29bfe, #fd79a8, #00b894);
+            border-radius: 3px;
+        }
+
+        /* 3D Cup Shuffle Game Specific Styles */
+        .cup-game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .game-title {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #00b894, #55efc4, #81ecec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 900;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .game-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 4px;
+            background: linear-gradient(to right, #00b894, #55efc4, #81ecec);
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            min-width: 120px;
+            text-align: center;
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #00b894;
+            text-shadow: 0 0 10px var(--success-glow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-area {
+            position: relative;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            perspective: 1000px;
+        }
+
+        .cups-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            position: relative;
+            height: 300px;
+            align-items: flex-end;
+            perspective: 1000px;
+            width: 100%;
+        }
+
+        .cup {
+            width: 120px;
+            height: 140px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 2;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .cup-body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%);
+            border-radius: 10px 10px 50% 50%;
+            position: relative;
+            box-shadow: 
+                0 15px 25px rgba(0, 0, 0, 0.4),
+                inset 0 -8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 8px 15px rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: all 0.5s ease;
+        }
+
+        .cup-body::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 5px 5px 45% 45%;
+            box-shadow: 
+                inset 0 8px 15px rgba(255, 255, 255, 0.9),
+                inset 0 -8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .cup-rim {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(135deg, #f0f0f0 0%, #c0c0c0 100%);
+            border-radius: 10px 10px 5px 5px;
+            box-shadow: 
+                0 2px 5px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.8);
+            z-index: 2;
+        }
+
+        .cup-number {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cup.show-number .cup-number {
+            opacity: 1;
+        }
+
+        .cup.selected .cup-body {
+            box-shadow: 
+                0 15px 25px rgba(0, 0, 0, 0.4),
+                inset 0 -8px 15px rgba(0, 0, 0, 0.3),
+                inset 0 8px 15px rgba(255, 255, 255, 0.6),
+                0 0 25px #00b894;
+        }
+
+        .cup.lifted {
+            transform: translateY(-120px) rotateX(10deg);
+        }
+
+        .cup.shuffling {
+            animation: shuffle3d 0.6s ease-in-out infinite;
+        }
+
+        @keyframes shuffle3d {
+            0%, 100% { 
+                transform: translateX(0) rotateY(0deg); 
+            }
+            25% { 
+                transform: translateX(-30px) rotateY(-15deg); 
+            }
+            75% { 
+                transform: translateX(30px) rotateY(15deg); 
+            }
+        }
+
+        .ball {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #e74c3c);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.4),
+                inset -8px -8px 15px rgba(0, 0, 0, 0.4),
+                inset 8px 8px 15px rgba(255, 255, 255, 0.3);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .ball.visible {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1.1);
+        }
+
+        .ball.bouncing {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, 0) scale(1.1); }
+            50% { transform: translate(-50%, -10px) scale(1.2); }
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--card-shadow);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            border: 1px solid var(--card-glow);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:active {
+            transform: translateY(2px);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+            border: none;
+        }
+
+        .control-btn.primary:hover {
+            box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .game-instructions {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            max-width: 550px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-instructions::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #00b894, #55efc4);
+        }
+
+        .game-instructions h3 {
+            margin-bottom: 15px;
+            color: #00b894;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+        }
+
+        .instructions-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .instructions-list li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .instructions-list li:before {
+            content: '▶';
+            color: #00b894;
+            font-size: 0.8rem;
+            position: absolute;
+            left: 0;
+            top: 2px;
+            text-shadow: 0 0 5px rgba(0, 184, 148, 0.7);
+        }
+
+        /* Game Over Modal */
+        .game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .game-over-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            border: 1px solid var(--card-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #fd79a8, #e17055);
+        }
+
+        .game-over-modal.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-content h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #fd79a8;
+            text-shadow: 0 0 10px var(--accent-glow);
+            font-weight: 800;
+        }
+
+        .final-score {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #00b894;
+            margin: 20px 0;
+            text-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        /* Bot Assistant Styles */
+        .bot-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .bot-toggle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 
+                0 6px 25px rgba(108, 92, 231, 0.5),
+                0 0 15px rgba(108, 92, 231, 0.6);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .bot-toggle:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 
+                0 8px 30px rgba(108, 92, 231, 0.7),
+                0 0 20px rgba(108, 92, 231, 0.8);
+        }
+
+        .bot-assistant {
+            position: absolute;
+            bottom: 90px;
+            right: 0;
+            width: 350px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            border: 1px solid var(--card-glow);
+        }
+
+        .bot-assistant.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .bot-header {
+            padding: 18px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-glow);
+        }
+
+        .bot-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .bot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bot-close:hover {
+            transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .bot-content {
+            padding: 25px;
+        }
+
+        .bot-messages {
+            margin-bottom: 25px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .bot-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .bot-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .bot-message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 18px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border-left: 3px solid #00b894;
+        }
+
+        .bot-message p {
+            margin: 0;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .bot-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bot-question {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            width: 100%;
+            border: 1px solid transparent;
+        }
+
+        .bot-question:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Music Toggle Styles */
+        .music-toggle {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .music-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .music-toggle.playing {
+            background: var(--accent-color);
+            animation: musicPulse 2s infinite;
+        }
+
+        /* Typing animation */
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background-color: white;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 
+                    0 6px 25px rgba(108, 92, 231, 0.5),
+                    0 0 15px rgba(108, 92, 231, 0.6);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 
+                    0 8px 30px rgba(108, 92, 231, 0.7),
+                    0 0 20px rgba(108, 92, 231, 0.8);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes musicPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(253, 121, 168, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(253, 121, 168, 0);
+            }
+        }
+
+        /* Ball positioning */
+        .ball-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .ball-under-cup {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #e74c3c);
+            border-radius: 50%;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.4),
+                inset -8px -8px 15px rgba(0, 0, 0, 0.4),
+                inset 8px 8px 15px rgba(255, 255, 255, 0.3);
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translate(-50%, 0);
+        }
+
+        .ball-under-cup.visible {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1.1);
+        }
+
+        .ball-under-cup.bouncing {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        /* Enhanced 3D Transformations */
+        .cup.shuffling-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cup.flipping {
+            animation: cupFlip 0.6s ease-in-out;
+        }
+
+        @keyframes cupFlip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .game-title {
+                font-size: 2.2rem;
+            }
+            
+            .game-stats {
+                gap: 15px;
+            }
+            
+            .stat {
+                min-width: 100px;
+                padding: 12px 15px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+            
+            .cups-container {
+                gap: 20px;
+                height: 250px;
+            }
+            
+            .cup {
+                width: 100px;
+                height: 120px;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 220px;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                padding: 25px;
+            }
+            
+            .bot-container {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .bot-assistant {
+                width: 300px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                top: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .fixed-back-btn {
+                left: 20px;
+            }
+            
+            .fixed-exit-btn {
+                right: 20px;
+            }
+            
+            .music-toggle {
+                bottom: 20px;
+                left: 20px;
+                width: 55px;
+                height: 55px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cup-game-container {
+                padding: 5px;
+            }
+            
+            .game-title {
+                font-size: 1.8rem;
+            }
+            
+            .stat {
+                min-width: 85px;
+                padding: 10px 12px;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .cups-container {
+                gap: 15px;
+                height: 220px;
+            }
+            
+            .cup {
+                width: 80px;
+                height: 100px;
+            }
+            
+            .game-instructions {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .modal-content h2 {
+                font-size: 1.8rem;
+            }
+            
+            .final-score {
+                font-size: 2.5rem;
+            }
+            
+            .bot-container {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .bot-assistant {
+                width: 280px;
+            }
+            
+            .music-toggle {
+                bottom: 15px;
+                left: 15px;
+                width: 55px;
+                height: 55px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                top: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+            
+            .fixed-back-btn {
+                left: 15px;
+            }
+            
+            .fixed-exit-btn {
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .game-title {
+                font-size: 1.6rem;
+            }
+            
+            .game-stats {
+                gap: 10px;
+            }
+            
+            .stat {
+                min-width: 75px;
+                padding: 8px 10px;
+            }
+            
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            .cups-container {
+                gap: 10px;
+            }
+            
+            .cup {
+                width: 70px;
+                height: 90px;
+            }
+            
+            .control-btn {
+                width: 200px;
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+            
+            .bot-assistant {
+                width: 260px;
+            }
+            
+            .fixed-back-btn, .fixed-exit-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Performance optimizations */
+        .cup-game-container * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Particle effect for background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Fixed Navigation Buttons -->
+    <button class="fixed-back-btn" id="btnBack">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    
+    <button class="fixed-exit-btn" id="btnExit">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <div class="container">
+        <!-- Header with title only -->
+        <header class="page-header">
+            <div class="header-center">
+                <h1>3D Cup Shuffle Game</h1>
+            </div>
+        </header>
+
+        <!-- Cup Shuffle Game Content -->
+        <main class="cup-game-container">
+            <div class="game-header">
+                <h2 class="game-title">Find the Ball</h2>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="score">0</div>
+                        <div class="stat-label">SCORE</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="round">1</div>
+                        <div class="stat-label">ROUND</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="streak">0</div>
+                        <div class="stat-label">STREAK</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-area">
+                <div class="ball-container" id="ballContainer">
+                    <!-- Balls will be positioned here dynamically -->
+                </div>
+                <div class="cups-container" id="cupsContainer">
+                    <div class="cup" data-cup="1">
+                        <div class="cup-rim"></div>
+                        <div class="cup-body"></div>
+                        <div class="cup-number">1</div>
+                    </div>
+                    <div class="cup" data-cup="2">
+                        <div class="cup-rim"></div>
+                        <div class="cup-body"></div>
+                        <div class="cup-number">2</div>
+                    </div>
+                    <div class="cup" data-cup="3">
+                        <div class="cup-rim"></div>
+                        <div class="cup-body"></div>
+                        <div class="cup-number">3</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="control-btn primary" id="btnStartRound">
+                    <i class="fas fa-play"></i>
+                    <span>Start Round</span>
+                </button>
+                <button class="control-btn" id="btnReset" disabled>
+                    <i class="fas fa-redo"></i>
+                    <span>Reset Game</span>
+                </button>
+            </div>
+
+            <div class="game-instructions">
+                <h3>How to Play</h3>
+                <ul class="instructions-list">
+                    <li>Click "Start Round" to begin the cup shuffle</li>
+                    <li>Watch carefully as the cups shuffle around in 3D</li>
+                    <li>After shuffling, numbers will appear under the cups</li>
+                    <li>Select the cup you think contains the ball</li>
+                    <li>Correct guesses increase your score and streak</li>
+                    <li>Higher rounds have faster and more complex shuffles</li>
+                    <li>Try to achieve the highest streak possible!</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Game Over Modal -->
+        <div class="game-over-modal" id="gameOverModal">
+            <div class="modal-content">
+                <h2 id="gameResult">Game Over!</h2>
+                <p id="gameResultText">Your cup shuffle game has ended</p>
+                <div class="final-score" id="finalScore">0</div>
+                <div class="modal-buttons">
+                    <button class="control-btn primary" id="btnPlayAgain">
+                        <i class="fas fa-redo"></i>
+                        <span>Play Again</span>
+                    </button>
+                    <button class="control-btn" id="btnBackToGames">
+                        <i class="fas fa-home"></i>
+                        <span>Back to Games</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot Assistant -->
+        <div class="bot-container">
+            <button class="bot-toggle" id="botToggle">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <div class="bot-assistant" id="botAssistant">
+                <div class="bot-header">
+                    <h3>MO11 - <a href="https://www.instagram.com/mo_little11?igsh=MTZsdWhpeXg5ZGttYQ%3D%3D&utm_source=qr" style="color: #fd79a8; text-decoration: none;">#1011</a></h3>
+                    <button class="bot-close" id="botClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="bot-content">
+                    <div class="bot-messages">
+                        <div class="bot-message">
+                            <p>Need help with the 3D Cup Shuffle game? I can assist you!</p>
+                        </div>
+                    </div>
+                    <div class="bot-questions">
+                        <button class="bot-question" data-question="game-rules">
+                            <span>How to play the game?</span>
+                        </button>
+                        <button class="bot-question" data-question="winning-tips">
+                            <span>Winning tips and strategies</span>
+                        </button>
+                        <button class="bot-question" data-question="scoring-system">
+                            <span>How does scoring work?</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Music -->
+        <audio id="backgroundMusic" loop>
+            <source src="assets/audio/background3.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <button class="music-toggle" id="musicToggle">
+            <i class="fas fa-volume-up"></i>
+        </button>
+
+        <!-- Game Sounds -->
+        <audio id="shuffleSound" preload="auto">
+            <source src="assets/audio/squidgame3.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="correctSound" preload="auto">
+            <source src="assets/audio/king.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="wrongSound" preload="auto">
+            <source src="assets/audio/error.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="gameOverSound" preload="auto">
+            <source src="assets/audio/game-over.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ===== GAME VARIABLES =====
+            const cupsContainer = document.getElementById('cupsContainer');
+            const ballContainer = document.getElementById('ballContainer');
+            const cups = document.querySelectorAll('.cup');
+            const scoreElement = document.getElementById('score');
+            const roundElement = document.getElementById('round');
+            const streakElement = document.getElementById('streak');
+            const gameOverModal = document.getElementById('gameOverModal');
+            const gameResultElement = document.getElementById('gameResult');
+            const gameResultTextElement = document.getElementById('gameResultText');
+            const finalScoreElement = document.getElementById('finalScore');
+            
+            // Game state
+            let score = 0;
+            let round = 1;
+            let streak = 0;
+            let ballPosition = 1; // 1, 2, or 3
+            let isShuffling = false;
+            let isSelecting = false;
+            let gameActive = false;
+            let ballElements = [];
+            
+            // Bot typing state
+            let isBotTyping = false;
+            
+            // ===== GAME FUNCTIONS =====
+            function initGame() {
+                score = 0;
+                round = 1;
+                streak = 0;
+                updateUI();
+                resetCups();
+                createBalls();
+            }
+            
+            function createBalls() {
+                // Clear existing balls
+                ballContainer.innerHTML = '';
+                ballElements = [];
+                
+                // Create balls for each cup position
+                cups.forEach(cup => {
+                    const ball = document.createElement('div');
+                    ball.className = 'ball-under-cup';
+                    ball.id = `ball-${cup.dataset.cup}`;
+                    
+                    // Position the ball under the cup
+                    const cupRect = cup.getBoundingClientRect();
+                    const containerRect = cupsContainer.getBoundingClientRect();
+                    
+                    ball.style.left = `${cupRect.left - containerRect.left + cupRect.width / 2}px`;
+                    ball.style.top = `${cupRect.bottom - containerRect.top}px`;
+                    
+                    ballContainer.appendChild(ball);
+                    ballElements.push(ball);
+                });
+            }
+            
+            function updateUI() {
+                scoreElement.textContent = score;
+                roundElement.textContent = round;
+                streakElement.textContent = streak;
+            }
+            
+            function resetCups() {
+                cups.forEach(cup => {
+                    cup.classList.remove('selected', 'lifted', 'shuffling', 'show-number', 'shuffling-3d', 'flipping');
+                    cup.style.transform = '';
+                    cup.style.transition = '';
+                });
+                
+                // Hide all balls
+                ballElements.forEach(ball => {
+                    ball.classList.remove('visible', 'bouncing');
+                });
+                
+                isShuffling = false;
+                isSelecting = false;
+            }
+            
+            function startRound() {
+                if (isShuffling) return;
+                
+                gameActive = true;
+                isShuffling = true;
+                isSelecting = false;
+                resetCups();
+                
+                // Hide cup numbers at the start
+                cups.forEach(cup => {
+                    cup.classList.remove('show-number');
+                });
+                
+                // Randomly position the ball
+                ballPosition = Math.floor(Math.random() * 3) + 1;
+                
+                // Show the ball briefly before shuffling
+                const initialBall = document.getElementById(`ball-${ballPosition}`);
+                initialBall.classList.add('visible', 'bouncing');
+                
+                // Play shuffle sound
+                playSound('shuffleSound');
+                
+                // After a delay, hide the ball and start the actual shuffle
+                setTimeout(() => {
+                    initialBall.classList.remove('visible', 'bouncing');
+                    performShuffle();
+                }, 1000);
+            }
+            
+            function performShuffle() {
+                // Calculate shuffle duration based on round
+                const shuffleDuration = Math.max(1000, 2000 - (round * 100));
+                const shuffleCount = Math.min(10, 5 + round);
+                
+                let shuffleStep = 0;
+                
+                // Use requestAnimationFrame for smoother animations
+                function shuffleStepFunction() {
+                    if (shuffleStep >= shuffleCount) {
+                        finishShuffle();
+                        return;
+                    }
+                    
+                    // Add 3D shuffling effect
+                    cups.forEach(cup => {
+                        cup.classList.add('shuffling-3d');
+                    });
+                    
+                    // Swap two random cups with more realistic animation
+                    const cup1Index = Math.floor(Math.random() * 3);
+                    const cup2Index = (cup1Index + 1 + Math.floor(Math.random() * 2)) % 3;
+                    
+                    // Get the actual cup elements
+                    const cup1 = cups[cup1Index];
+                    const cup2 = cups[cup2Index];
+                    
+                    // Calculate positions for smooth animation
+                    const cup1Rect = cup1.getBoundingClientRect();
+                    const cup2Rect = cup2.getBoundingClientRect();
+                    const containerRect = cupsContainer.getBoundingClientRect();
+                    
+                    const cup1X = cup1Rect.left - containerRect.left + cup1Rect.width / 2;
+                    const cup2X = cup2Rect.left - containerRect.left + cup2Rect.width / 2;
+                    
+                    // Animate the swap with more realistic movement
+                    cup1.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    cup2.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    
+                    // Move cups to swap positions with slight elevation
+                    cup1.style.transform = `translate(${cup2X - cup1X}px, -20px) rotateY(15deg)`;
+                    cup2.style.transform = `translate(${cup1X - cup2X}px, -20px) rotateY(-15deg)`;
+                    
+                    // Update ball position tracking
+                    if (cup1.dataset.cup == ballPosition) {
+                        ballPosition = parseInt(cup2.dataset.cup);
+                    } else if (cup2.dataset.cup == ballPosition) {
+                        ballPosition = parseInt(cup1.dataset.cup);
+                    }
+                    
+                    shuffleStep++;
+                    
+                    // After animation completes, reset transforms and swap in DOM
+                    setTimeout(() => {
+                        // Swap in DOM
+                        const parent = cupsContainer;
+                        const cup1Next = cup1.nextElementSibling;
+                        const cup2Next = cup2.nextElementSibling;
+                        
+                        if (cup1Next === cup2) {
+                            parent.insertBefore(cup2, cup1);
+                        } else if (cup2Next === cup1) {
+                            parent.insertBefore(cup1, cup2);
+                        } else {
+                            parent.insertBefore(cup2, cup1Next);
+                            parent.insertBefore(cup1, cup2Next);
+                        }
+                        
+                        // Reset transforms
+                        cup1.style.transform = '';
+                        cup2.style.transform = '';
+                        
+                        // Continue to next shuffle step
+                        setTimeout(shuffleStepFunction, 100);
+                    }, 500);
+                }
+                
+                // Start the shuffle sequence
+                shuffleStepFunction();
+            }
+            
+            function finishShuffle() {
+                isShuffling = false;
+                isSelecting = true;
+                
+                // Show cup numbers after shuffling
+                cups.forEach(cup => {
+                    cup.classList.add('show-number');
+                });
+                
+                // Enable cup selection
+                cups.forEach(cup => {
+                    cup.style.cursor = 'pointer';
+                });
+            }
+            
+            function selectCup(selectedCup) {
+                if (!isSelecting || isShuffling) return;
+                
+                isSelecting = false;
+                const selectedCupNumber = parseInt(selectedCup.dataset.cup);
+                
+                // Highlight selected cup
+                cups.forEach(cup => cup.classList.remove('selected'));
+                selectedCup.classList.add('selected');
+                
+                // Lift all cups to reveal the ball
+                setTimeout(() => {
+                    cups.forEach(cup => {
+                        cup.classList.add('lifted');
+                    });
+                    
+                    // Show the ball
+                    const ball = document.getElementById(`ball-${ballPosition}`);
+                    ball.classList.add('visible', 'bouncing');
+                    
+                    // Check if the selection is correct
+                    setTimeout(() => {
+                        if (selectedCupNumber === ballPosition) {
+                            handleCorrectGuess();
+                        } else {
+                            handleWrongGuess();
+                        }
+                    }, 500);
+                }, 500);
+            }
+            
+            function handleCorrectGuess() {
+                playSound('correctSound');
+                
+                // Update score and streak
+                const pointsEarned = 10 * round;
+                score += pointsEarned;
+                streak++;
+                
+                // Check for round completion
+                if (streak % 3 === 0) {
+                    round++;
+                }
+                
+                updateUI();
+                
+                // Prepare for next round
+                setTimeout(() => {
+                    resetCups();
+                }, 2000);
+            }
+            
+            function handleWrongGuess() {
+                playSound('wrongSound');
+                
+                // Reset streak
+                streak = 0;
+                updateUI();
+                
+                // End game if score is 0, otherwise continue
+                if (score === 0) {
+                    endGame();
+                } else {
+                    // Prepare for next round
+                    setTimeout(() => {
+                        resetCups();
+                    }, 2000);
+                }
+            }
+            
+            function endGame() {
+                gameActive = false;
+                playSound('gameOverSound');
+                
+                gameResultElement.textContent = 'Game Over!';
+                gameResultTextElement.textContent = `You scored ${score} points!`;
+                finalScoreElement.textContent = score;
+                gameOverModal.classList.add('active');
+            }
+            
+            function playSound(soundId) {
+                const sound = document.getElementById(soundId);
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.log("Sound play prevented:", e));
+                }
+            }
+            
+            // Bot typing function
+            function typeMessage(message, messageDiv, callback) {
+                if (isBotTyping) return;
+                
+                isBotTyping = true;
+                let index = 0;
+                messageDiv.innerHTML = '';
+                
+                const typingInterval = setInterval(() => {
+                    if (index < message.length) {
+                        messageDiv.innerHTML += message.charAt(index);
+                        index++;
+                        
+                        // Scroll to bottom of messages
+                        const messages = document.querySelector('.bot-messages');
+                        messages.scrollTop = messages.scrollHeight;
+                    } else {
+                        clearInterval(typingInterval);
+                        isBotTyping = false;
+                        if (callback) callback();
+                    }
+                }, 30); // Adjust typing speed here (milliseconds per character)
+            }
+            
+            // ===== EVENT LISTENERS =====
+            document.getElementById('btnStartRound').addEventListener('click', function() {
+                if (!isShuffling && !isSelecting) {
+                    startRound();
+                }
+            });
+            
+            document.getElementById('btnReset').addEventListener('click', initGame);
+            
+            document.getElementById('btnPlayAgain').addEventListener('click', function() {
+                gameOverModal.classList.remove('active');
+                initGame();
+            });
+            
+            document.getElementById('btnBackToGames').addEventListener('click', function() {
+                window.location.href = 'games.html';
+            });
+            
+            document.getElementById('btnBack').addEventListener('click', function() {
+                window.location.href = 'games.html';
+            });
+            
+            document.getElementById('btnExit').addEventListener('click', function() {
+                if (confirm('Are you sure you want to exit GameNest?')) {
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // Cup selection
+            cups.forEach(cup => {
+                cup.addEventListener('click', function() {
+                    if (isSelecting && !isShuffling) {
+                        selectCup(this);
+                    }
+                });
+            });
+            
+            // Bot Assistant Functionality
+            document.getElementById('botToggle').addEventListener('click', function() {
+                document.getElementById('botAssistant').classList.toggle('active');
+            });
+            
+            document.getElementById('botClose').addEventListener('click', function() {
+                document.getElementById('botAssistant').classList.remove('active');
+            });
+            
+            // Music Toggle Functionality
+            const musicToggle = document.getElementById('musicToggle');
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            
+            // Auto-play background music on page load
+            window.addEventListener('load', function() {
+                // Try to play background music automatically
+                const playPromise = backgroundMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        // Auto-play started successfully
+                        musicToggle.classList.add('playing');
+                    }).catch(error => {
+                        // Auto-play was prevented, show the play button
+                        console.log("Auto-play prevented:", error);
+                        musicToggle.classList.remove('playing');
+                    });
+                }
+            });
+            
+            musicToggle.addEventListener('click', function() {
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play();
+                    musicToggle.classList.add('playing');
+                } else {
+                    backgroundMusic.pause();
+                    musicToggle.classList.remove('playing');
+                }
+            });
+            
+            // Bot Questions
+            document.querySelectorAll('.bot-question').forEach(button => {
+                button.addEventListener('click', function() {
+                    const question = this.getAttribute('data-question');
+                    const messages = document.querySelector('.bot-messages');
+                    
+                    let response = '';
+                    switch(question) {
+                        case 'game-rules':
+                            response = 'The 3D Cup Shuffle game is simple: watch as the cups shuffle in 3D, then select the one you think contains the ball. Correct guesses earn points and increase your streak. The game gets harder as you progress with faster shuffles.';
+                            break;
+                        case 'winning-tips':
+                            response = 'Focus on one cup from the start and try to track it through the 3D shuffles. The middle cup is often the hardest to track, so pay extra attention to it. Watch for the subtle 3D rotation effects that can help you track the cups.';
+                            break;
+                        case 'scoring-system':
+                            response = 'You earn 10 points times the current round for each correct guess. Your streak increases with consecutive correct guesses, and every 3 correct guesses advances you to the next round. Higher rounds have faster shuffles but also give more points.';
+                            break;
+                    }
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'bot-message';
+                    messages.appendChild(messageDiv);
+                    
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'bot-message';
+                    typingIndicator.innerHTML = '<p>MO11 is typing<span class="typing-cursor"></span></p>';
+                    messages.appendChild(typingIndicator);
+                    messages.scrollTop = messages.scrollHeight;
+                    
+                    // Remove typing indicator and type the actual message
+                    setTimeout(() => {
+                        messages.removeChild(typingIndicator);
+                        typeMessage(response, messageDiv);
+                    }, 1000);
+                });
+            });
+            
+            // Create background particles
+            function createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const particleCount = 30;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    const size = Math.random() * 5 + 2;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    
+                    particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                    particle.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            
+            // Handle window resize for better responsiveness
+            function handleResize() {
+                // Recreate balls to reposition them correctly
+                createBalls();
+            }
+            
+            // ===== INITIALIZATION =====
+            initGame();
+            createParticles();
+            
+            // Add resize listener
+            window.addEventListener('resize', handleResize);
+        });
+    </script>
+</body>
+</html>
