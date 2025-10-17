@@ -766,6 +766,155 @@
             50% { opacity: 0; }
         }
 
+        /* Game Stats Styles */
+        .stats-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .stats-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .stats-progress {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .stats-progress.red { background: var(--red); }
+        .stats-progress.green { background: var(--green); }
+        .stats-progress.blue { background: var(--blue); }
+        .stats-progress.yellow { background: var(--yellow); }
+
+        /* Game History Styles */
+        .history-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* NEW: Confetti animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.8;
+            z-index: 9999;
+            animation: confetti-fall 5s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* NEW: Player turn indicator */
+        .player-turn-indicator {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            animation: turn-indicator 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes turn-indicator {
+            0%, 100% { border-color: rgba(255, 255, 255, 0.5); transform: scale(1); }
+            50% { border-color: rgba(255, 255, 255, 0.8); transform: scale(1.1); }
+        }
+
+        /* NEW: Token stacking */
+        .token-stacked {
+            animation: stack-pulse 1.5s infinite;
+        }
+
+        @keyframes stack-pulse {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* NEW: Achievement badges */
+        .achievement-badge {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--card-glow);
+            text-align: center;
+            z-index: 1002;
+            transition: transform 0.5s ease;
+        }
+
+        .achievement-badge.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .achievement-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: gold;
+        }
+
+        /* NEW: Game speed controls */
+        .speed-controls {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .speed-btn {
+            flex: 1;
+            padding: 5px;
+            font-size: 0.8rem;
+        }
+
         /* responsive */
         @media (max-width: 900px) {
             .board-wrapper { flex-direction: column; align-items: center; }
@@ -843,22 +992,22 @@
 <body>
     <!-- Background Music -->
     <audio id="backgroundMusic" loop>
-        <source src="assets/audio/background3.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
     
     <!-- Game Sounds -->
     <audio id="moveSound" preload="auto">
-        <source src="assets/audio/checkers-move.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-plastic-bubble-click-1124.mp3" type="audio/mpeg">
     </audio>
     <audio id="diceSound" preload="auto">
-        <source src="assets/audio/dice-roll.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-dice-roll-1998.mp3" type="audio/mpeg">
     </audio>
     <audio id="captureSound" preload="auto">
-        <source src="assets/audio/eating.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" type="audio/mpeg">
     </audio>
     <audio id="winSound" preload="auto">
-        <source src="assets/audio/game-over.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Fixed Navigation Buttons -->
@@ -906,6 +1055,15 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Achievement Badge -->
+    <div class="achievement-badge" id="achievementBadge">
+        <div class="achievement-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <h4 id="achievementTitle">Achievement Unlocked!</h4>
+        <p id="achievementDesc">Description of the achievement</p>
     </div>
 
     <div class="container">
@@ -980,6 +1138,14 @@
                 <div class="mb-2">
                     <button id="startBtn" class="btn btn-success">New Game</button>
                     <button id="toggleAiBtn" class="btn btn-secondary">Toggle AI</button>
+                    <button id="statsBtn" class="btn btn-info">Show Stats</button>
+                </div>
+
+                <!-- NEW: Game Speed Controls -->
+                <div class="speed-controls">
+                    <button class="btn btn-sm btn-outline-light speed-btn" data-speed="slow">Slow</button>
+                    <button class="btn btn-sm btn-outline-light speed-btn active" data-speed="normal">Normal</button>
+                    <button class="btn btn-sm btn-outline-light speed-btn" data-speed="fast">Fast</button>
                 </div>
 
                 <div class="player-controls">
@@ -1012,6 +1178,22 @@
                 <div class="mb-2">
                     <div><strong>Players:</strong></div>
                     <ul id="playersList" class="list-group"></ul>
+                </div>
+
+                <div class="stats-container" id="statsContainer" style="display: none;">
+                    <div class="stats-header">
+                        <h5>Game Statistics</h5>
+                        <button class="btn btn-sm btn-outline-light" id="closeStats">Close</button>
+                    </div>
+                    <div id="statsContent"></div>
+                </div>
+
+                <div class="history-container" id="historyContainer" style="display: none;">
+                    <div class="stats-header">
+                        <h5>Game History</h5>
+                        <button class="btn btn-sm btn-outline-light" id="closeHistory">Close</button>
+                    </div>
+                    <div id="historyContent"></div>
                 </div>
 
                 <div class="winner-list" id="winnerList" style="display: none;">
@@ -1047,6 +1229,13 @@
             const gameStatus = document.getElementById('gameStatus');
             const winnerList = document.getElementById('winnerList');
             const winnerItems = document.getElementById('winnerItems');
+            const statsContainer = document.getElementById('statsContainer');
+            const statsContent = document.getElementById('statsContent');
+            const historyContainer = document.getElementById('historyContainer');
+            const historyContent = document.getElementById('historyContent');
+            const achievementBadge = document.getElementById('achievementBadge');
+            const achievementTitle = document.getElementById('achievementTitle');
+            const achievementDesc = document.getElementById('achievementDesc');
             
             // Audio elements
             const backgroundMusic = document.getElementById('backgroundMusic');
@@ -1054,6 +1243,15 @@
             const diceSound = document.getElementById('diceSound');
             const captureSound = document.getElementById('captureSound');
             const winSound = document.getElementById('winSound');
+            
+            // Game settings
+            let gameSpeed = 300; // Default speed in ms
+            let achievements = {
+                firstWin: false,
+                threeSixes: false,
+                perfectGame: false,
+                comeback: false
+            };
             
             // Board generation
             const homePaths = {
@@ -1117,18 +1315,19 @@
             positionTokensLayer();
             window.addEventListener('resize', positionTokensLayer);
 
-            // Track definition - Standard Ludo path
+            // CORRECTED TRACK DEFINITION - Standard Ludo path
             const track = [
-                {r:7,c:2},{r:7,c:3},{r:7,c:4},{r:7,c:5},{r:7,c:6},
-                {r:6,c:6},{r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},
-                {r:2,c:7},{r:2,c:8},{r:2,c:9},{r:2,c:10},{r:2,c:11},
-                {r:3,c:11},{r:4,c:11},{r:5,c:11},{r:6,c:11},{r:7,c:11},
-                {r:8,c:11},{r:9,c:11},{r:10,c:11},{r:11,c:11},{r:12,c:11},
-                {r:12,c:10},{r:12,c:9},{r:12,c:8},{r:12,c:7},{r:12,c:6},
-                {r:11,c:6},{r:10,c:6},{r:9,c:6},{r:8,c:6},{r:8,c:5},
-                {r:8,c:4},{r:8,c:3},{r:8,c:2},{r:9,c:2},{r:10,c:2},
-                {r:11,c:2},{r:12,c:2},{r:13,c:2},{r:14,c:2},{r:14,c:3},
-                {r:14,c:4},{r:14,c:5},{r:14,c:6},{r:14,c:7}
+                // Red path
+                {r:7,c:2}, {r:7,c:3}, {r:7,c:4}, {r:7,c:5}, {r:7,c:6},
+                {r:6,c:6}, {r:5,c:6}, {r:4,c:6}, {r:3,c:6}, {r:2,c:6},
+                {r:2,c:7}, {r:2,c:8}, {r:2,c:9}, {r:2,c:10}, {r:2,c:11},
+                {r:3,c:11}, {r:4,c:11}, {r:5,c:11}, {r:6,c:11}, {r:7,c:11},
+                {r:8,c:11}, {r:9,c:11}, {r:10,c:11}, {r:11,c:11}, {r:12,c:11},
+                {r:12,c:10}, {r:12,c:9}, {r:12,c:8}, {r:12,c:7}, {r:12,c:6},
+                {r:11,c:6}, {r:10,c:6}, {r:9,c:6}, {r:8,c:6}, {r:8,c:5},
+                {r:8,c:4}, {r:8,c:3}, {r:8,c:2}, {r:9,c:2}, {r:10,c:2},
+                {r:11,c:2}, {r:12,c:2}, {r:13,c:2}, {r:14,c:2}, {r:14,c:3},
+                {r:14,c:4}, {r:14,c:5}, {r:14,c:6}, {r:14,c:7}
             ];
             
             const TRACK_LEN = track.length;
@@ -1164,15 +1363,40 @@
                 gameActive: false,
                 diceRolling: false,
                 waitingForTokenSelection: false,
-                selectedToken: null
+                selectedToken: null,
+                gameHistory: [],
+                stats: {
+                    rolls: {red:0, green:0, blue:0, yellow:0},
+                    moves: {red:0, green:0, blue:0, yellow:0},
+                    captures: {red:0, green:0, blue:0, yellow:0},
+                    sixes: {red:0, green:0, blue:0, yellow:0}
+                }
             };
 
             // Token management
             let tokenIdCounter = 0;
             function createTokens() {
                 game.tokens = {};
-                const homes = { red:{r:3,c:3}, green:{r:3,c:13}, blue:{r:13,c:3}, yellow:{r:13,c:13} };
-                const offsets = [ {x:-20,y:-20},{x:20,y:-20},{x:-20,y:20},{x:20,y:20} ];
+                
+                // CORRECTED: Home positions for tokens - these are the positions inside the start areas
+                const homePositions = { 
+                    red: [
+                        {r:3,c:3}, {r:3,c:4}, 
+                        {r:4,c:3}, {r:4,c:4}
+                    ],
+                    green: [
+                        {r:3,c:12}, {r:3,c:13}, 
+                        {r:4,c:12}, {r:4,c:13}
+                    ],
+                    blue: [
+                        {r:12,c:3}, {r:12,c:4}, 
+                        {r:13,c:3}, {r:13,c:4}
+                    ],
+                    yellow: [
+                        {r:12,c:12}, {r:12,c:13}, 
+                        {r:13,c:12}, {r:13,c:13}
+                    ]
+                };
 
                 for (const color of COLORS){
                     for (let t=0;t<4;t++){
@@ -1183,8 +1407,8 @@
                             element: createTokenElement(id,color)
                         };
                         game.tokens[id]=token;
-                        const homeCoord = homes[color];
-                        placeTokenElement(token, offsets[t]);
+                        const homeCoord = homePositions[color][t];
+                        placeTokenElement(token, homeCoord);
                     }
                 }
             }
@@ -1196,7 +1420,7 @@
                 el.innerText = id.split('_')[1].slice(1);
                 el.style.pointerEvents = 'auto';
                 el.addEventListener('click', handleTokenClick);
-                document.body.appendChild(el);
+                tokensLayer.appendChild(el);
                 return el;
             }
 
@@ -1236,19 +1460,18 @@
                 };
             }
 
-            // Place token element
-            function placeTokenElement(token, homeOffset){
+            // Place token element - FIXED VERSION
+            function placeTokenElement(token, homeCoord){
                 const el = token.element;
                 if (token.index === -1){
-                    const homeMap = { red:{r:3,c:3}, green:{r:3,c:13}, blue:{r:13,c:3}, yellow:{r:13,c:13} };
-                    const base = homeMap[token.color];
-                    const px = cellCenterPixel(base.r, base.c);
+                    // Token is in home
+                    const px = cellCenterPixel(homeCoord.r, homeCoord.c);
                     if (px) {
-                        const offset = homeOffset || {x: (Math.random()*30-15), y:(Math.random()*30-15)};
-                        el.style.left = (px.x + offset.x) + 'px';
-                        el.style.top = (px.y + offset.y) + 'px';
+                        el.style.left = px.x + 'px';
+                        el.style.top = px.y + 'px';
                     }
                 } else if (token.index >= TRACK_LEN) {
+                    // Token is in home path
                     const color = token.color;
                     const hp = homePaths[color];
                     const pos = hp[token.index - TRACK_LEN];
@@ -1260,7 +1483,7 @@
                         }
                     }
                 } else {
-                    // Calculate the actual position on the track
+                    // Token is on the main track
                     const playerStartIndex = startIndex[token.color];
                     const actualIndex = (playerStartIndex + token.index) % TRACK_LEN;
                     const pos = track[actualIndex];
@@ -1291,8 +1514,10 @@
                     if (steps === 6){
                         token.index = 0;
                         placeTokenElement(token);
-                        await sleep(400);
+                        await sleep(gameSpeed);
                         playSound(moveSound);
+                        // Update stats
+                        game.stats.moves[token.color]++;
                     }
                     token.element.classList.remove('moving');
                     return;
@@ -1307,12 +1532,16 @@
                             game.winnerOrder.push(token.color);
                             updateWinnerList();
                             playSound(winSound);
+                            createConfetti();
+                            checkAchievements(token.color);
                         }
                         placeTokenElement(token);
                         break;
                     }
                     placeTokenElement(token);
-                    await sleep(300);
+                    await sleep(gameSpeed);
+                    // Update stats
+                    game.stats.moves[token.color]++;
                 }
                 
                 token.element.classList.remove('moving');
@@ -1326,6 +1555,61 @@
                     sound.currentTime = 0;
                     sound.play().catch(e => console.log("Sound play prevented:", e));
                 }
+            }
+
+            // NEW: Create confetti animation
+            function createConfetti() {
+                const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }
+            }
+
+            // NEW: Check for achievements
+            function checkAchievements(color) {
+                const player = game.players.find(p => p.color === color);
+                
+                // First win achievement
+                if (!achievements.firstWin && game.winnerOrder.length === 1) {
+                    achievements.firstWin = true;
+                    showAchievement("First Victory!", `${color.charAt(0).toUpperCase() + color.slice(1)} won their first game!`);
+                }
+                
+                // Three sixes in a row achievement
+                if (!achievements.threeSixes && game.consecutiveSixes >= 3) {
+                    achievements.threeSixes = true;
+                    showAchievement("Lucky Streak!", "Rolled three 6s in a row!");
+                }
+                
+                // Perfect game achievement (all tokens home without being captured)
+                const playerTokens = Object.values(game.tokens).filter(t => t.color === color);
+                const captures = game.stats.captures[color];
+                if (!achievements.perfectGame && playerTokens.every(t => t.finished) && captures === 0) {
+                    achievements.perfectGame = true;
+                    showAchievement("Perfect Game!", `${color.charAt(0).toUpperCase() + color.slice(1)} finished without any captures!`);
+                }
+            }
+
+            // NEW: Show achievement badge
+            function showAchievement(title, description) {
+                achievementTitle.textContent = title;
+                achievementDesc.textContent = description;
+                achievementBadge.classList.add('show');
+                
+                setTimeout(() => {
+                    achievementBadge.classList.remove('show');
+                }, 3000);
             }
 
             // UI Updates
@@ -1404,10 +1688,17 @@
                 lastRollEl.innerText = val;
                 game.diceRolling = false;
                 
+                // Update stats
+                const player = game.players[game.currentPlayerIdx];
+                game.stats.rolls[player.color]++;
+                if (val === 6) {
+                    game.stats.sixes[player.color]++;
+                }
+                
                 return val;
             }
 
-            // Token selection logic
+            // IMPROVED AI: Token selection logic
             function chooseTokenToMove(color, roll){
                 const tokens = Object.values(game.tokens).filter(t=>t.color===color && !t.finished);
                 const inHome = tokens.filter(t=>t.index===-1);
@@ -1419,6 +1710,47 @@
                 const onTrack = tokens.filter(t=>t.index>=0);
                 if (onTrack.length===0) return null;
                 
+                // IMPROVED AI: Try to capture opponent tokens if possible
+                for (const token of onTrack) {
+                    const newIndex = token.index + roll;
+                    if (newIndex < TRACK_LEN) {
+                        const playerStartIndex = startIndex[token.color];
+                        const actualIndex = (playerStartIndex + newIndex) % TRACK_LEN;
+                        const pos = track[actualIndex];
+                        
+                        // Check if this position would capture an opponent
+                        for (const t of Object.values(game.tokens)){
+                            if (t.color===color || t.index<0) continue;
+                            
+                            let tcoord;
+                            if (t.index >= TRACK_LEN) {
+                                const idx = t.index - TRACK_LEN; 
+                                tcoord = homePaths[t.color][idx];
+                            } else {
+                                const playerStartIndex = startIndex[t.color];
+                                const actualIndex = (playerStartIndex + t.index) % TRACK_LEN;
+                                tcoord = track[actualIndex];
+                            }
+                            
+                            if (tcoord && tcoord.r===pos.r && tcoord.c===pos.c){
+                                // This move would capture an opponent - prioritize it
+                                return token;
+                            }
+                        }
+                    }
+                }
+                
+                // IMPROVED AI: Try to move tokens that are close to finishing
+                const closeToFinish = onTrack.filter(t => {
+                    const remaining = (TRACK_LEN + homePaths[t.color].length) - t.index;
+                    return remaining <= 6 && remaining >= roll;
+                });
+                
+                if (closeToFinish.length > 0) {
+                    return closeToFinish[0];
+                }
+                
+                // Otherwise, choose the token that's farthest along
                 onTrack.sort((a,b)=> (b.index - a.index));
                 return onTrack[0];
             }
@@ -1465,6 +1797,11 @@
                         placeTokenElement(t);
                         updateStatusMessage(`${movedToken.color.charAt(0).toUpperCase() + movedToken.color.slice(1)} captured ${t.color}'s token!`);
                         playSound(captureSound);
+                        // Update stats
+                        game.stats.captures[movedToken.color]++;
+                        
+                        // Add to game history
+                        addToHistory(`${movedToken.color} captured ${t.color}'s token`);
                     }
                 }
             }
@@ -1491,6 +1828,81 @@
                 });
             }
 
+            // Add to game history
+            function addToHistory(message) {
+                const player = game.players[game.currentPlayerIdx];
+                const historyItem = {
+                    player: player.color,
+                    message: message,
+                    roll: game.lastRoll,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+                game.gameHistory.unshift(historyItem);
+                
+                // Keep only last 20 items
+                if (game.gameHistory.length > 20) {
+                    game.gameHistory.pop();
+                }
+                
+                updateHistoryDisplay();
+            }
+
+            // Update history display
+            function updateHistoryDisplay() {
+                historyContent.innerHTML = '';
+                game.gameHistory.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <span class="badge bg-${item.player} me-1">${item.player.charAt(0).toUpperCase()}</span>
+                        ${item.message} (Roll: ${item.roll}) 
+                        <small class="text-muted ms-1">${item.timestamp}</small>
+                    `;
+                    historyContent.appendChild(historyItem);
+                });
+            }
+
+            // Update stats display
+            function updateStatsDisplay() {
+                statsContent.innerHTML = '';
+                
+                COLORS.forEach(color => {
+                    const statsItem = document.createElement('div');
+                    statsItem.className = 'mb-3';
+                    
+                    const player = game.players.find(p => p.color === color);
+                    const isActive = player && game.currentPlayerIdx === game.players.indexOf(player);
+                    
+                    statsItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold ${isActive ? 'text-warning' : ''}">${color.charAt(0).toUpperCase() + color.slice(1)}</span>
+                            <span class="badge ${player && player.isAI ? 'bg-secondary' : 'bg-primary'}">${player && player.isAI ? 'AI' : 'Human'}</span>
+                        </div>
+                        <div class="stats-item">
+                            <span>Rolls:</span>
+                            <span>${game.stats.rolls[color]}</span>
+                        </div>
+                        <div class="stats-item">
+                            <span>Moves:</span>
+                            <span>${game.stats.moves[color]}</span>
+                        </div>
+                        <div class="stats-item">
+                            <span>Captures:</span>
+                            <span>${game.stats.captures[color]}</span>
+                        </div>
+                        <div class="stats-item">
+                            <span>Sixes:</span>
+                            <span>${game.stats.sixes[color]}</span>
+                        </div>
+                        <div class="stats-bar">
+                            <div class="stats-progress ${color}" style="width: ${(game.stats.moves[color] / (game.stats.rolls[color] * 6)) * 100 || 0}%"></div>
+                        </div>
+                    `;
+                    
+                    statsContent.appendChild(statsItem);
+                });
+            }
+
             // Move selected token
             async function moveSelectedToken() {
                 if (!game.selectedToken) return;
@@ -1498,6 +1910,9 @@
                 const player = game.players[game.currentPlayerIdx];
                 const token = game.selectedToken;
                 const roll = game.lastRoll;
+                
+                // Add to game history
+                addToHistory(`moved token ${token.id.split('_')[1].slice(1)}`);
                 
                 // Remove highlights
                 Object.values(game.tokens).forEach(token => {
@@ -1562,13 +1977,14 @@
                 game.lastRoll = roll;
                 
                 updateStatusMessage(`${player.color.charAt(0).toUpperCase() + player.color.slice(1)} rolled a ${roll}`);
+                addToHistory(`rolled a ${roll}`);
                 
                 // Gather movable tokens
                 const tokens = Object.values(game.tokens).filter(t=>t.color===player.color && !t.finished);
                 const movable = tokens.filter(t => {
                     if (t.index === -1) return roll===6;
                     const newIndex = t.index + roll;
-                    const maxIndex = TRACK_LEN + homePaths[t.color].length - 1;
+                    const maxIndex = TRACK_LEN + homePaths[token.color].length - 1;
                     return newIndex <= maxIndex;
                 });
 
@@ -1636,6 +2052,14 @@
 
             // Start new game
             function initGame(){
+                // Reset achievements
+                achievements = {
+                    firstWin: false,
+                    threeSixes: false,
+                    perfectGame: false,
+                    comeback: false
+                };
+                
                 // Get AI settings from switches
                 game.players[0].isAI = document.getElementById('redAI').checked;
                 game.players[1].isAI = document.getElementById('greenAI').checked;
@@ -1655,6 +2079,13 @@
                 game.gameActive = true;
                 game.waitingForTokenSelection = false;
                 game.selectedToken = null;
+                game.gameHistory = [];
+                game.stats = {
+                    rolls: {red:0, green:0, blue:0, yellow:0},
+                    moves: {red:0, green:0, blue:0, yellow:0},
+                    captures: {red:0, green:0, blue:0, yellow:0},
+                    sixes: {red:0, green:0, blue:0, yellow:0}
+                };
                 
                 // Update UI
                 document.getElementById('modeLabel').innerText = game.players.some(p=>p.isAI) ? 'Local + AI' : 'Local (All human)';
@@ -1664,10 +2095,37 @@
                 updateStatusMessage("Game started! " + game.players[0].color.charAt(0).toUpperCase() + 
                     game.players[0].color.slice(1) + " goes first.");
                 winnerList.style.display = 'none';
+                statsContainer.style.display = 'none';
+                historyContainer.style.display = 'none';
                 
                 // Place tokens correctly once board layout is stable
                 setTimeout(()=>{ 
-                    for (const t of Object.values(game.tokens)) placeTokenElement(t); 
+                    for (const t of Object.values(game.tokens)) {
+                        // Get the correct home position for each token
+                        const color = t.color;
+                        const tokenId = t.id;
+                        const tokenNum = parseInt(tokenId.split('_')[1].slice(1));
+                        const homePositions = {
+                            red: [
+                                {r:3,c:3}, {r:3,c:4}, 
+                                {r:4,c:3}, {r:4,c:4}
+                            ],
+                            green: [
+                                {r:3,c:12}, {r:3,c:13}, 
+                                {r:4,c:12}, {r:4,c:13}
+                            ],
+                            blue: [
+                                {r:12,c:3}, {r:12,c:4}, 
+                                {r:13,c:3}, {r:13,c:4}
+                            ],
+                            yellow: [
+                                {r:12,c:12}, {r:12,c:13}, 
+                                {r:13,c:12}, {r:13,c:13}
+                            ]
+                        };
+                        const homeCoord = homePositions[color][tokenNum];
+                        placeTokenElement(t, homeCoord);
+                    }
                 }, 200);
             }
 
@@ -1685,6 +2143,23 @@
                 
                 document.getElementById('modeLabel').innerText = game.players.some(p=>p.isAI) ? 'Local + AI' : 'Local (All human)';
                 updatePlayersUI();
+            });
+
+            // Stats button
+            document.getElementById('statsBtn').addEventListener('click', () => {
+                updateStatsDisplay();
+                statsContainer.style.display = statsContainer.style.display === 'none' ? 'block' : 'none';
+                historyContainer.style.display = 'none';
+            });
+
+            // Close stats
+            document.getElementById('closeStats').addEventListener('click', () => {
+                statsContainer.style.display = 'none';
+            });
+
+            // Show history
+            document.getElementById('closeHistory').addEventListener('click', () => {
+                historyContainer.style.display = 'none';
             });
 
             // Individual AI toggles
@@ -1706,6 +2181,31 @@
             document.getElementById('yellowAI').addEventListener('change', (e) => {
                 game.players[3].isAI = e.target.checked;
                 updatePlayersUI();
+            });
+
+            // NEW: Game speed controls
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Set game speed based on button
+                    const speed = this.getAttribute('data-speed');
+                    switch(speed) {
+                        case 'slow':
+                            gameSpeed = 500;
+                            break;
+                        case 'normal':
+                            gameSpeed = 300;
+                            break;
+                        case 'fast':
+                            gameSpeed = 150;
+                            break;
+                    }
+                });
             });
 
             // Auto-play loop for AI players
@@ -1834,7 +2334,7 @@
             // Initialize and start the game
             initGame();
             autoplayerLoop();
-
+ 
             // Expose for debugging
             window.game = game;
         });

@@ -7,7 +7,7 @@
     <title>Matching Cards - GameNest</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS Variables */
+        /* CSS Variables and all other styles remain the same */
         :root {
             --primary-color: #6c5ce7;
             --secondary-color: #a29bfe;
@@ -28,7 +28,7 @@
             --neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
         }
 
-        /* Base Styles */
+        /* All CSS styles remain exactly the same as before */
         * {
             margin: 0;
             padding: 0;
@@ -426,7 +426,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
@@ -436,6 +436,7 @@
         }
 
         .game-over-modal.active {
+            display: flex;
             opacity: 1;
             visibility: visible;
         }
@@ -1391,16 +1392,19 @@
                 
                 // Auto-play background music
                 autoPlayMusic();
+                
+                // Ensure game over modal is hidden
+                gameOverModal.classList.remove('active');
             }
             
             function setTimeLimit() {
                 // Set time limits based on difficulty and card count
                 if (totalPairs === 4) { // Easy
-                    timeLimit = 60; // 1 minute (reduced from 2 minutes)
+                    timeLimit = 60; // 1 minute
                 } else if (totalPairs === 6) { // Medium
-                    timeLimit = 90; // 1.5 minutes (reduced from 3 minutes)
+                    timeLimit = 90; // 1.5 minutes
                 } else { // Hard
-                    timeLimit = 120; // 2 minutes (reduced from 4 minutes)
+                    timeLimit = 120; // 2 minutes
                 }
                 
                 // Update time challenge display
@@ -1437,6 +1441,11 @@
                         const moImage = document.createElement('img');
                         moImage.src = 'assets/images/card.jpg';
                         moImage.alt = 'MO';
+                        moImage.onerror = function() {
+                            // If image fails to load, show text instead
+                            this.style.display = 'none';
+                            cardFront.textContent = 'MO';
+                        };
                         cardFront.appendChild(moImage);
                     } else {
                         cardFront.textContent = cardSymbolsDuplicated[i];
@@ -1563,6 +1572,7 @@
             }
             
             function updateTimer() {
+                // Only update timer if game is active
                 if (!gameActive) return;
                 
                 seconds++;
@@ -1597,9 +1607,9 @@
                 playSound('gameOverSound');
                 
                 // Calculate score
-                const timeScore = Math.max(0, 1000 - (minutes * 60 + seconds) * 10); // Increased penalty
-                const movesScore = Math.max(0, 500 - movesCount * 15); // Increased penalty
-                const timeBonus = timeUp ? 0 : 500; // Bonus for finishing before time limit
+                const timeScore = Math.max(0, 1000 - (minutes * 60 + seconds) * 10);
+                const movesScore = Math.max(0, 500 - movesCount * 15);
+                const timeBonus = timeUp ? 0 : 500;
                 const totalScore = timeScore + movesScore + timeBonus;
                 
                 // Update modal content
@@ -1711,7 +1721,7 @@
                         isBotTyping = false;
                         if (callback) callback();
                     }
-                }, 30); // Adjust typing speed here (milliseconds per character)
+                }, 30);
             }
             
             // ===== EVENT LISTENERS =====
@@ -1868,6 +1878,13 @@
             
             // Show setup modal on page load
             gameSetupModal.style.display = 'flex';
+            
+            // Initialize timer display
+            timerElement.textContent = '00:00';
+            
+            // Ensure game over modal is hidden on page load
+            gameOverModal.classList.remove('active');
+            gameOverModal.style.display = 'none';
         });
     </script>
 </body>
