@@ -144,7 +144,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 10px;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
@@ -234,8 +234,9 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-height: 60vh;
-            overflow: hidden;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 10px;
         }
 
         .cards-grid {
@@ -245,6 +246,7 @@
             max-width: 600px;
             width: 100%;
             margin: 0 auto;
+            padding: 10px;
         }
 
         .card {
@@ -1394,11 +1396,11 @@
             function setTimeLimit() {
                 // Set time limits based on difficulty and card count
                 if (totalPairs === 4) { // Easy
-                    timeLimit = 120; // 2 minutes
+                    timeLimit = 60; // 1 minute (reduced from 2 minutes)
                 } else if (totalPairs === 6) { // Medium
-                    timeLimit = 180; // 3 minutes
+                    timeLimit = 90; // 1.5 minutes (reduced from 3 minutes)
                 } else { // Hard
-                    timeLimit = 240; // 4 minutes
+                    timeLimit = 120; // 2 minutes (reduced from 4 minutes)
                 }
                 
                 // Update time challenge display
@@ -1456,16 +1458,48 @@
                 }
                 
                 // Adjust grid layout based on difficulty
-                if (totalPairs === 4) {
+                adjustGridLayout();
+            }
+            
+            function adjustGridLayout() {
+                // Adjust grid layout based on screen size and difficulty
+                const screenWidth = window.innerWidth;
+                
+                if (screenWidth <= 576) {
+                    // Mobile devices - always use 2 columns
                     cardsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
                     cardsGrid.style.maxWidth = '300px';
-                } else if (totalPairs === 6) {
-                    cardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-                    cardsGrid.style.maxWidth = '400px';
-                } else if (totalPairs === 8) {
-                    cardsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
-                    cardsGrid.style.maxWidth = '500px';
+                } else if (screenWidth <= 768) {
+                    // Tablets
+                    if (totalPairs === 4) {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                        cardsGrid.style.maxWidth = '300px';
+                    } else if (totalPairs === 6) {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                        cardsGrid.style.maxWidth = '350px';
+                    } else {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+                        cardsGrid.style.maxWidth = '400px';
+                    }
+                } else {
+                    // Desktop
+                    if (totalPairs === 4) {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                        cardsGrid.style.maxWidth = '300px';
+                    } else if (totalPairs === 6) {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                        cardsGrid.style.maxWidth = '400px';
+                    } else {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+                        cardsGrid.style.maxWidth = '500px';
+                    }
                 }
+                
+                // Adjust card size based on screen size
+                const cardSize = Math.min(screenWidth * 0.15, 120);
+                document.querySelectorAll('.card').forEach(card => {
+                    card.style.minWidth = `${cardSize}px`;
+                });
             }
             
             function flipCard(card) {
@@ -1546,7 +1580,7 @@
                 const totalSeconds = minutes * 60 + seconds;
                 const timeLeft = timeLimit - totalSeconds;
                 
-                if (timeLeft <= 30 && timeLeft > 0 && !timeChallengeActive) {
+                if (timeLeft <= 15 && timeLeft > 0 && !timeChallengeActive) {
                     timeChallengeActive = true;
                     timeChallengeElement.classList.add('time-critical');
                 }
@@ -1563,8 +1597,8 @@
                 playSound('gameOverSound');
                 
                 // Calculate score
-                const timeScore = Math.max(0, 1000 - (minutes * 60 + seconds) * 5);
-                const movesScore = Math.max(0, 500 - movesCount * 10);
+                const timeScore = Math.max(0, 1000 - (minutes * 60 + seconds) * 10); // Increased penalty
+                const movesScore = Math.max(0, 500 - movesCount * 15); // Increased penalty
                 const timeBonus = timeUp ? 0 : 500; // Bonus for finishing before time limit
                 const totalScore = timeScore + movesScore + timeBonus;
                 
@@ -1821,6 +1855,13 @@
                     particlesContainer.appendChild(particle);
                 }
             }
+            
+            // Window resize handler
+            window.addEventListener('resize', function() {
+                if (gameActive) {
+                    adjustGridLayout();
+                }
+            });
             
             // ===== INITIALIZATION =====
             createParticles();
