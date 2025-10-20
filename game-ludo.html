@@ -915,6 +915,52 @@
             font-size: 0.8rem;
         }
 
+        /* NEW: Turn transition animation */
+        .turn-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .turn-transition.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .turn-transition-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--card-glow);
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+
+        .turn-transition.active .turn-transition-content {
+            transform: scale(1);
+        }
+
+        .turn-transition h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #a29bfe, #fd79a8, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         /* responsive */
         @media (max-width: 900px) {
             .board-wrapper { flex-direction: column; align-items: center; }
@@ -986,6 +1032,14 @@
             .bot-assistant {
                 width: 280px;
             }
+            
+            .turn-transition-content {
+                padding: 20px 30px;
+            }
+            
+            .turn-transition h3 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -1009,6 +1063,14 @@
     <audio id="winSound" preload="auto">
         <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
     </audio>
+
+    <!-- Turn Transition Overlay -->
+    <div class="turn-transition" id="turnTransition">
+        <div class="turn-transition-content">
+            <h3 id="turnTransitionText">Player's Turn</h3>
+            <p>Get ready!</p>
+        </div>
+    </div>
 
     <!-- Fixed Navigation Buttons -->
     <button class="fixed-back-btn" id="btnBack">
@@ -1236,6 +1298,8 @@
             const achievementBadge = document.getElementById('achievementBadge');
             const achievementTitle = document.getElementById('achievementTitle');
             const achievementDesc = document.getElementById('achievementDesc');
+            const turnTransition = document.getElementById('turnTransition');
+            const turnTransitionText = document.getElementById('turnTransitionText');
             
             // Audio elements
             const backgroundMusic = document.getElementById('backgroundMusic');
@@ -1316,15 +1380,23 @@
             window.addEventListener('resize', positionTokensLayer);
 
             // CORRECTED TRACK DEFINITION - Standard Ludo path
+            // This is the main track that all players follow (clockwise)
             const track = [
-                // Red path
+                // Red starting path (from red start to first corner)
                 {r:7,c:2}, {r:7,c:3}, {r:7,c:4}, {r:7,c:5}, {r:7,c:6},
+                // Up to top-left corner
                 {r:6,c:6}, {r:5,c:6}, {r:4,c:6}, {r:3,c:6}, {r:2,c:6},
+                // Across top
                 {r:2,c:7}, {r:2,c:8}, {r:2,c:9}, {r:2,c:10}, {r:2,c:11},
+                // Down to top-right corner
                 {r:3,c:11}, {r:4,c:11}, {r:5,c:11}, {r:6,c:11}, {r:7,c:11},
+                // Across middle-right
                 {r:8,c:11}, {r:9,c:11}, {r:10,c:11}, {r:11,c:11}, {r:12,c:11},
+                // Across bottom-right
                 {r:12,c:10}, {r:12,c:9}, {r:12,c:8}, {r:12,c:7}, {r:12,c:6},
+                // Up to bottom-left corner
                 {r:11,c:6}, {r:10,c:6}, {r:9,c:6}, {r:8,c:6}, {r:8,c:5},
+                // Across bottom-left
                 {r:8,c:4}, {r:8,c:3}, {r:8,c:2}, {r:9,c:2}, {r:10,c:2},
                 {r:11,c:2}, {r:12,c:2}, {r:13,c:2}, {r:14,c:2}, {r:14,c:3},
                 {r:14,c:4}, {r:14,c:5}, {r:14,c:6}, {r:14,c:7}
@@ -1332,18 +1404,12 @@
             
             const TRACK_LEN = track.length;
 
-            function findTrackIndexFor(coord) {
-                for (let i=0;i<track.length;i++){
-                    if (track[i].r===coord.r && track[i].c===coord.c) return i;
-                }
-                return -1;
-            }
-
+            // CORRECTED: Find starting positions for each color
             const startIndex = {
-                red: findTrackIndexFor(startSquares.red),
-                green: findTrackIndexFor(startSquares.green),
-                blue: findTrackIndexFor(startSquares.blue),
-                yellow: findTrackIndexFor(startSquares.yellow)
+                red: 0,    // Red starts at position 0
+                green: 13, // Green starts at position 13
+                blue: 26,  // Blue starts at position 26
+                yellow: 39 // Yellow starts at position 39
             };
 
             // Game state
@@ -1407,7 +1473,7 @@
                             element: createTokenElement(id,color)
                         };
                         game.tokens[id]=token;
-                        const homeCoord = homePositions[color][t];
+                        const homeCoord = homePositions[color][t]; // Use the specific position for this token
                         placeTokenElement(token, homeCoord);
                     }
                 }
@@ -1460,7 +1526,7 @@
                 };
             }
 
-            // Place token element - FIXED VERSION
+            // CORRECTED: Place token element with proper path calculation
             function placeTokenElement(token, homeCoord){
                 const el = token.element;
                 if (token.index === -1){
@@ -1484,6 +1550,7 @@
                     }
                 } else {
                     // Token is on the main track
+                    // CORRECTED: Calculate position based on player's starting point
                     const playerStartIndex = startIndex[token.color];
                     const actualIndex = (playerStartIndex + token.index) % TRACK_LEN;
                     const pos = track[actualIndex];
@@ -1504,7 +1571,7 @@
                 }
             }
 
-            // Move token with animation
+            // CORRECTED: Move token with proper path following
             async function moveTokenBy(token, steps){
                 if (token.finished) return;
 
@@ -1525,6 +1592,18 @@
 
                 for (let s=0; s<steps; s++){
                     token.index++;
+                    
+                    // Check if token has entered home path
+                    if (token.index === TRACK_LEN) {
+                        // Token is at the entrance to home path
+                        // Check if exact roll is needed to enter home path
+                        if (s < steps - 1) {
+                            // Not exact roll, can't enter home path yet
+                            token.index = TRACK_LEN - 1;
+                            break;
+                        }
+                    }
+                    
                     if (token.index === TRACK_LEN + homePaths[token.color].length){
                         token.finished = true;
                         token.index = TRACK_LEN + homePaths[token.color].length - 1;
@@ -1612,6 +1691,20 @@
                 }, 3000);
             }
 
+            // NEW: Show turn transition
+            async function showTurnTransition(player) {
+                const playerName = player.color.charAt(0).toUpperCase() + player.color.slice(1);
+                const playerType = player.isAI ? "AI" : "Player";
+                
+                turnTransitionText.textContent = `${playerName} ${playerType}'s Turn`;
+                turnTransition.classList.add('active');
+                
+                await sleep(1000);
+                
+                turnTransition.classList.remove('active');
+                await sleep(500);
+            }
+
             // UI Updates
             function updatePlayersUI(){
                 playersList.innerHTML = '';
@@ -1626,11 +1719,15 @@
                 });
             }
 
-            function nextPlayer() {
+            async function nextPlayer() {
                 game.currentPlayerIdx = (game.currentPlayerIdx + 1) % game.players.length;
                 game.consecutiveSixes = 0;
                 updatePlayersUI();
                 updateTurnDisplay();
+                
+                // Show turn transition
+                const player = game.players[game.currentPlayerIdx];
+                await showTurnTransition(player);
             }
 
             function updateTurnDisplay(){
@@ -1755,7 +1852,7 @@
                 return onTrack[0];
             }
 
-            // Check for captures
+            // CORRECTED: Check for captures with proper position calculation
             function checkCaptures(movedToken){
                 if (movedToken.index<0) return;
                 
@@ -1961,7 +2058,7 @@
                     }
                 }
 
-                nextPlayer();
+                await nextPlayer();
             }
 
             // Player turn logic
@@ -1984,7 +2081,7 @@
                 const movable = tokens.filter(t => {
                     if (t.index === -1) return roll===6;
                     const newIndex = t.index + roll;
-                    const maxIndex = TRACK_LEN + homePaths[token.color].length - 1;
+                    const maxIndex = TRACK_LEN + homePaths[t.color].length - 1;
                     return newIndex <= maxIndex;
                 });
 
@@ -2051,7 +2148,7 @@
             });
 
             // Start new game
-            function initGame(){
+            async function initGame(){
                 // Reset achievements
                 achievements = {
                     firstWin: false,
@@ -2097,6 +2194,9 @@
                 winnerList.style.display = 'none';
                 statsContainer.style.display = 'none';
                 historyContainer.style.display = 'none';
+                
+                // Show initial turn transition
+                await showTurnTransition(game.players[0]);
                 
                 // Place tokens correctly once board layout is stable
                 setTimeout(()=>{ 
@@ -2331,9 +2431,81 @@
                 }
             });
 
-            // Initialize and start the game
-            initGame();
-            autoplayerLoop();
+            // Initialize UI but don't start the game
+            // Initialize UI but don't start the game
+            function initializeUI() {
+                // Get AI settings from switches
+                game.players[0].isAI = document.getElementById('redAI').checked;
+                game.players[1].isAI = document.getElementById('greenAI').checked;
+                game.players[2].isAI = document.getElementById('blueAI').checked;
+                game.players[3].isAI = document.getElementById('yellowAI').checked;
+                
+                // Remove old token elements
+                for (const t of Object.values(game.tokens||{})){
+                    if (t.element && t.element.remove) t.element.remove();
+                }
+                
+                // Reset game state
+                game.currentPlayerIdx = 0; 
+                game.consecutiveSixes=0; 
+                game.lastRoll=null; 
+                game.winnerOrder=[];
+                game.gameActive = false;
+                game.waitingForTokenSelection = false;
+                game.selectedToken = null;
+                game.gameHistory = [];
+                game.stats = {
+                    rolls: {red:0, green:0, blue:0, yellow:0},
+                    moves: {red:0, green:0, blue:0, yellow:0},
+                    captures: {red:0, green:0, blue:0, yellow:0},
+                    sixes: {red:0, green:0, blue:0, yellow:0}
+                };
+                
+                // Update UI
+                document.getElementById('modeLabel').innerText = game.players.some(p=>p.isAI) ? 'Local + AI' : 'Local (All human)';
+                createTokens();
+                updatePlayersUI(); 
+                updateTurnDisplay();
+                updateStatusMessage("Click 'New Game' to start playing!");
+                winnerList.style.display = 'none';
+                statsContainer.style.display = 'none';
+                historyContainer.style.display = 'none';
+                
+                // Place tokens correctly once board layout is stable
+                setTimeout(()=>{ 
+                    for (const t of Object.values(game.tokens)) {
+                        // Get the correct home position for each token
+                        const color = t.color;
+                        const tokenId = t.id;
+                        const tokenNum = parseInt(tokenId.split('_')[1].slice(1));
+                        const homePositions = {
+                            red: [
+                                {r:3,c:3}, {r:3,c:4}, 
+                                {r:4,c:3}, {r:4,c:4}
+                            ],
+                            green: [
+                                {r:3,c:12}, {r:3,c:13}, 
+                                {r:4,c:12}, {r:4,c:13}
+                            ],
+                            blue: [
+                                {r:12,c:3}, {r:12,c:4}, 
+                                {r:13,c:3}, {r:13,c:4}
+                            ],
+                            yellow: [
+                                {r:12,c:12}, {r:12,c:13}, 
+                                {r:13,c:12}, {r:13,c:13}
+                            ]
+                        };
+                        const homeCoord = homePositions[color][tokenNum];
+                        placeTokenElement(t, homeCoord);
+                    }
+                }, 200);
+            }
+
+            // Initialize the UI when page loads
+            initializeUI();
+            // Don't start the autoplayer loop until the game is started
+            // autoplayerLoop();
  
             // Expose for debugging
             window.game = game;
