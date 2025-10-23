@@ -7,7 +7,7 @@
     <title>Matching Cards - GameNest</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS Variables and all other styles remain the same */
+        /* CSS Variables */
         :root {
             --primary-color: #6c5ce7;
             --secondary-color: #a29bfe;
@@ -28,7 +28,7 @@
             --neon-glow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
         }
 
-        /* All CSS styles remain exactly the same as before */
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -277,6 +277,7 @@
             transform: scale(0.95);
             box-shadow: 0 0 20px rgba(0, 184, 148, 0.7);
             border-color: #00b894;
+            animation: matchSuccess 0.5s ease;
         }
 
         .card-front, .card-back {
@@ -295,6 +296,7 @@
             transform: rotateY(180deg);
             font-size: 2.5rem;
             color: white;
+            overflow: hidden;
         }
 
         .card-front img {
@@ -361,6 +363,17 @@
 
         .control-btn.primary:hover {
             box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn:disabled:hover {
+            transform: none;
+            box-shadow: var(--card-shadow);
         }
 
         .game-instructions {
@@ -487,6 +500,31 @@
             color: #00b894;
             margin: 20px 0;
             text-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .score-label {
+            color: #a29bfe;
+        }
+
+        .score-value {
+            color: #00b894;
+            font-weight: 600;
         }
 
         .modal-buttons {
@@ -858,12 +896,12 @@
             vertical-align: middle;
         }
 
+        /* Animations */
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
         }
 
-        /* Animations */
         @keyframes pulse {
             0%, 100% {
                 transform: scale(1);
@@ -897,6 +935,64 @@
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
+        }
+
+        @keyframes matchSuccess {
+            0% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0, 184, 148, 0.7);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(0, 184, 148, 0.9);
+            }
+            100% { 
+                transform: scale(0.95);
+                box-shadow: 0 0 20px rgba(0, 184, 148, 0.7);
+            }
+        }
+
+        @keyframes cardShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 15px auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #00b894, #55efc4);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Star Rating */
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 15px 0;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #636e72;
+        }
+
+        .star.filled {
+            color: #fdcb6e;
+            text-shadow: 0 0 10px rgba(253, 203, 110, 0.7);
         }
 
         /* Responsive adjustments */
@@ -1121,6 +1217,152 @@
             border-radius: 50%;
             animation: float 15s infinite linear;
         }
+
+        /* New Styles for Improvements */
+        .hint-counter {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .card.hint-highlight {
+            animation: hintPulse 1.5s infinite;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { box-shadow: 0 0 10px #fdcb6e; }
+            50% { box-shadow: 0 0 25px #fdcb6e; }
+        }
+
+        .card.mismatch {
+            animation: mismatchShake 0.5s ease;
+        }
+
+        @keyframes mismatchShake {
+            0%, 100% { transform: rotateY(180deg) translateX(0); }
+            25% { transform: rotateY(180deg) translateX(-5px); }
+            75% { transform: rotateY(180deg) translateX(5px); }
+        }
+
+        .combo-counter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fd79a8;
+            text-shadow: 0 0 10px rgba(253, 121, 168, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .combo-animation {
+            animation: comboFloat 1.5s ease-out forwards;
+        }
+
+        @keyframes comboFloat {
+            0% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -100px); }
+        }
+
+        .achievement-badge {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            border: 2px solid var(--accent-color);
+            z-index: 3000;
+            transition: transform 0.5s ease;
+        }
+
+        .achievement-badge.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .achievement-badge h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .streak-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .streak-fire {
+            color: #ff9f43;
+            animation: firePulse 1s infinite alternate;
+        }
+
+        @keyframes firePulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        .card-back.pattern-1 {
+            background: linear-gradient(45deg, #6c5ce7 25%, transparent 25%, transparent 75%, #6c5ce7 75%, #6c5ce7),
+                        linear-gradient(45deg, #6c5ce7 25%, transparent 25%, transparent 75%, #6c5ce7 75%, #6c5ce7);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        .card-back.pattern-2 {
+            background: radial-gradient(circle at center, #a29bfe 0%, #6c5ce7 100%);
+        }
+
+        .card-back.pattern-3 {
+            background: 
+                linear-gradient(135deg, transparent 0%, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%, transparent 100%),
+                linear-gradient(45deg, #6c5ce7, #a29bfe);
+            background-size: 10px 10px;
+        }
+
+        .leaderboard-btn {
+            position: fixed;
+            bottom: 110px;
+            left: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-glow);
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .leaderboard-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -1134,6 +1376,11 @@
     
     <button class="fixed-exit-btn" id="btnExit">
         <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Leaderboard Button -->
+    <button class="leaderboard-btn" id="leaderboardBtn">
+        <i class="fas fa-trophy"></i>
     </button>
     
     <div class="container">
@@ -1162,6 +1409,13 @@
                         <div class="stat-label">TIME</div>
                         <div class="time-challenge" id="timeChallenge"></div>
                     </div>
+                    <div class="stat">
+                        <div class="stat-value" id="comboCount">0</div>
+                        <div class="stat-label">COMBO</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
                 </div>
             </div>
 
@@ -1183,6 +1437,7 @@
                 <button class="control-btn" id="btnHint">
                     <i class="fas fa-lightbulb"></i>
                     <span>Hint</span>
+                    <div class="hint-counter" id="hintCounter">3</div>
                 </button>
             </div>
 
@@ -1194,7 +1449,8 @@
                     <li>If they don't match, they will flip back after a short delay</li>
                     <li>Try to match all pairs with the fewest moves</li>
                     <li>Complete the game as quickly as possible</li>
-                    <li>Use the hint button if you get stuck</li>
+                    <li>Use the hint button if you get stuck (max 3 per game)</li>
+                    <li>Build combos by making consecutive matches for bonus points!</li>
                 </ul>
             </div>
         </main>
@@ -1204,7 +1460,15 @@
             <div class="modal-content">
                 <h2 id="gameResult">Congratulations!</h2>
                 <p id="gameResultText">You've matched all the cards!</p>
+                <div class="star-rating" id="starRating">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
                 <div class="final-score" id="finalScore">0</div>
+                <div class="score-breakdown" id="scoreBreakdown">
+                    <!-- Score breakdown will be inserted here -->
+                </div>
                 <div class="modal-buttons">
                     <button class="control-btn primary" id="btnPlayAgain">
                         <i class="fas fa-redo"></i>
@@ -1235,6 +1499,9 @@
                             <div class="difficulty-option" data-difficulty="hard">
                                 <span>Hard (16 cards)</span>
                             </div>
+                            <div class="difficulty-option" data-difficulty="expert">
+                                <span>Expert (20 cards)</span>
+                            </div>
                         </div>
                     </div>
                     <div class="option-group">
@@ -1254,12 +1521,32 @@
                             </div>
                         </div>
                     </div>
+                    <div class="option-group">
+                        <label>Game Mode:</label>
+                        <div class="difficulty-options">
+                            <div class="difficulty-option selected" data-mode="normal">
+                                <span>Normal</span>
+                            </div>
+                            <div class="difficulty-option" data-mode="time-attack">
+                                <span>Time Attack</span>
+                            </div>
+                            <div class="difficulty-option" data-mode="memory-master">
+                                <span>Memory Master</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <button class="control-btn primary" id="btnStartGame">
                     <i class="fas fa-play"></i>
                     <span>Start Game</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Achievement Badge -->
+        <div class="achievement-badge" id="achievementBadge">
+            <h3 id="achievementTitle">Achievement Unlocked!</h3>
+            <p id="achievementDesc">You've earned an achievement!</p>
         </div>
 
         <!-- Bot Assistant -->
@@ -1317,6 +1604,9 @@
         <audio id="gameOverSound" preload="auto">
             <source src="assets/audio/game-over.mp3" type="audio/mpeg">
         </audio>
+        <audio id="comboSound" preload="auto">
+            <source src="assets/audio/combo.mp3" type="audio/mpeg">
+        </audio>
     </div>
 
     <script>
@@ -1327,11 +1617,19 @@
             const matchesCountElement = document.getElementById('matchesCount');
             const timerElement = document.getElementById('timer');
             const timeChallengeElement = document.getElementById('timeChallenge');
+            const progressBar = document.getElementById('progressBar');
             const gameOverModal = document.getElementById('gameOverModal');
             const gameSetupModal = document.getElementById('gameSetupModal');
             const gameResultElement = document.getElementById('gameResult');
             const gameResultTextElement = document.getElementById('gameResultText');
             const finalScoreElement = document.getElementById('finalScore');
+            const scoreBreakdownElement = document.getElementById('scoreBreakdown');
+            const starRatingElement = document.getElementById('starRating');
+            const hintCounterElement = document.getElementById('hintCounter');
+            const comboCountElement = document.getElementById('comboCount');
+            const achievementBadge = document.getElementById('achievementBadge');
+            const achievementTitle = document.getElementById('achievementTitle');
+            const achievementDesc = document.getElementById('achievementDesc');
             
             // Game state
             let cards = [];
@@ -1347,6 +1645,12 @@
             let canFlip = true;
             let timeLimit = 0; // Time limit in seconds
             let timeChallengeActive = false;
+            let hintsUsed = 0;
+            let maxHints = 3;
+            let comboCount = 0;
+            let consecutiveMatches = 0;
+            let gameMode = 'normal'; // normal, time-attack, memory-master
+            let leaderboard = JSON.parse(localStorage.getItem('matchingCardsLeaderboard')) || [];
             
             // Card symbols based on theme - including MO image
             const cardSymbols = {
@@ -1372,22 +1676,30 @@
                 gameActive = true;
                 canFlip = true;
                 timeChallengeActive = false;
+                hintsUsed = 0;
+                comboCount = 0;
+                consecutiveMatches = 0;
                 
                 // Update UI
                 movesCountElement.textContent = movesCount;
                 matchesCountElement.textContent = matchedPairs;
+                comboCountElement.textContent = comboCount;
                 updateTimer();
+                updateProgressBar();
                 timeChallengeElement.textContent = '';
                 timeChallengeElement.className = 'time-challenge';
+                hintCounterElement.textContent = maxHints - hintsUsed;
                 
-                // Start timer
+                // Enable hint button
+                document.getElementById('btnHint').disabled = false;
+                
+                // Clear any existing timer
                 clearInterval(timerInterval);
-                timerInterval = setInterval(updateTimer, 1000);
                 
                 // Create cards based on difficulty
                 createCards();
                 
-                // Set time limit based on difficulty
+                // Set time limit based on difficulty and game mode
                 setTimeLimit();
                 
                 // Auto-play background music
@@ -1395,22 +1707,46 @@
                 
                 // Ensure game over modal is hidden
                 gameOverModal.classList.remove('active');
+                
+                // Start the timer
+                timerInterval = setInterval(updateTimer, 1000);
             }
             
             function setTimeLimit() {
-                // Set time limits based on difficulty and card count
-                if (totalPairs === 4) { // Easy
-                    timeLimit = 60; // 1 minute
-                } else if (totalPairs === 6) { // Medium
-                    timeLimit = 90; // 1.5 minutes
-                } else { // Hard
-                    timeLimit = 120; // 2 minutes
+                // Set time limits based on difficulty and game mode
+                if (gameMode === 'time-attack') {
+                    if (totalPairs === 4) { // Easy
+                        timeLimit = 60; // 1 minute
+                    } else if (totalPairs === 6) { // Medium
+                        timeLimit = 90; // 1.5 minutes
+                    } else if (totalPairs === 8) { // Hard
+                        timeLimit = 120; // 2 minutes
+                    } else { // Expert
+                        timeLimit = 150; // 2.5 minutes
+                    }
+                } else if (gameMode === 'memory-master') {
+                    // Memory master mode - no time limit but limited moves
+                    timeLimit = 0;
+                    timeChallengeElement.textContent = 'Limited Moves Mode';
+                } else {
+                    // Normal mode
+                    if (totalPairs === 4) { // Easy
+                        timeLimit = 120; // 2 minutes
+                    } else if (totalPairs === 6) { // Medium
+                        timeLimit = 180; // 3 minutes
+                    } else if (totalPairs === 8) { // Hard
+                        timeLimit = 240; // 4 minutes
+                    } else { // Expert
+                        timeLimit = 300; // 5 minutes
+                    }
                 }
                 
                 // Update time challenge display
-                const timeLimitMinutes = Math.floor(timeLimit / 60);
-                const timeLimitSeconds = timeLimit % 60;
-                timeChallengeElement.textContent = `Time Challenge: ${timeLimitMinutes}:${timeLimitSeconds < 10 ? '0' : ''}${timeLimitSeconds}`;
+                if (timeLimit > 0) {
+                    const timeLimitMinutes = Math.floor(timeLimit / 60);
+                    const timeLimitSeconds = timeLimit % 60;
+                    timeChallengeElement.textContent = `Time Challenge: ${timeLimitMinutes}:${timeLimitSeconds < 10 ? '0' : ''}${timeLimitSeconds}`;
+                }
             }
             
             function createCards() {
@@ -1453,6 +1789,11 @@
                     
                     const cardBack = document.createElement('div');
                     cardBack.className = 'card-back';
+                    
+                    // Add different patterns to card backs
+                    const patternClass = `pattern-${Math.floor(Math.random() * 3) + 1}`;
+                    cardBack.classList.add(patternClass);
+                    
                     const icon = document.createElement('i');
                     icon.className = 'fas fa-question';
                     cardBack.appendChild(icon);
@@ -1486,9 +1827,12 @@
                     } else if (totalPairs === 6) {
                         cardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
                         cardsGrid.style.maxWidth = '350px';
-                    } else {
+                    } else if (totalPairs === 8) {
                         cardsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
                         cardsGrid.style.maxWidth = '400px';
+                    } else {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                        cardsGrid.style.maxWidth = '450px';
                     }
                 } else {
                     // Desktop
@@ -1498,9 +1842,12 @@
                     } else if (totalPairs === 6) {
                         cardsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
                         cardsGrid.style.maxWidth = '400px';
-                    } else {
+                    } else if (totalPairs === 8) {
                         cardsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
                         cardsGrid.style.maxWidth = '500px';
+                    } else {
+                        cardsGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+                        cardsGrid.style.maxWidth = '550px';
                     }
                 }
                 
@@ -1541,15 +1888,26 @@
                             flippedCards = [];
                             matchedPairs++;
                             matchesCountElement.textContent = matchedPairs;
+                            updateProgressBar();
                             playSound('matchSound');
                             
-                            // Add match animation
-                            card1.style.animation = 'match 0.5s ease';
-                            card2.style.animation = 'match 0.5s ease';
-                            setTimeout(() => {
-                                card1.style.animation = '';
-                                card2.style.animation = '';
-                            }, 500);
+                            // Handle combo system
+                            consecutiveMatches++;
+                            if (consecutiveMatches > 1) {
+                                comboCount += consecutiveMatches;
+                                comboCountElement.textContent = comboCount;
+                                
+                                // Show combo animation
+                                showComboAnimation(consecutiveMatches);
+                                
+                                // Play combo sound
+                                if (consecutiveMatches >= 3) {
+                                    playSound('comboSound');
+                                }
+                            }
+                            
+                            // Check for achievements
+                            checkAchievements();
                             
                             canFlip = true;
                             
@@ -1565,10 +1923,56 @@
                             card2.classList.remove('flipped');
                             flippedCards = [];
                             playSound('mismatchSound');
+                            
+                            // Add shake animation for mismatch
+                            card1.classList.add('mismatch');
+                            card2.classList.add('mismatch');
+                            setTimeout(() => {
+                                card1.classList.remove('mismatch');
+                                card2.classList.remove('mismatch');
+                            }, 500);
+                            
+                            // Reset combo
+                            consecutiveMatches = 0;
+                            
                             canFlip = true;
                         }, 1000);
                     }
                 }
+            }
+            
+            function showComboAnimation(combo) {
+                const comboElement = document.createElement('div');
+                comboElement.className = 'combo-counter combo-animation';
+                comboElement.textContent = `COMBO x${combo}!`;
+                document.querySelector('.game-area').appendChild(comboElement);
+                
+                setTimeout(() => {
+                    comboElement.remove();
+                }, 1500);
+            }
+            
+            function checkAchievements() {
+                // Check for various achievements
+                if (matchedPairs === totalPairs && movesCount <= totalPairs) {
+                    showAchievement('Perfect Memory', 'You completed the game with perfect moves!');
+                } else if (consecutiveMatches >= 5) {
+                    showAchievement('Memory Master', 'You made 5 consecutive matches!');
+                } else if (comboCount >= 10) {
+                    showAchievement('Combo King', 'You reached a combo of 10!');
+                } else if (matchedPairs === totalPairs && seconds < 30) {
+                    showAchievement('Speed Demon', 'You completed the game in under 30 seconds!');
+                }
+            }
+            
+            function showAchievement(title, description) {
+                achievementTitle.textContent = title;
+                achievementDesc.textContent = description;
+                achievementBadge.classList.add('show');
+                
+                setTimeout(() => {
+                    achievementBadge.classList.remove('show');
+                }, 3000);
             }
             
             function updateTimer() {
@@ -1587,45 +1991,178 @@
                 timerElement.textContent = `${formattedMinutes}:${formattedSeconds}`;
                 
                 // Check time challenge
-                const totalSeconds = minutes * 60 + seconds;
-                const timeLeft = timeLimit - totalSeconds;
-                
-                if (timeLeft <= 15 && timeLeft > 0 && !timeChallengeActive) {
-                    timeChallengeActive = true;
-                    timeChallengeElement.classList.add('time-critical');
+                if (timeLimit > 0) {
+                    const totalSeconds = minutes * 60 + seconds;
+                    const timeLeft = timeLimit - totalSeconds;
+                    
+                    if (timeLeft <= 30 && timeLeft > 0 && !timeChallengeActive) {
+                        timeChallengeActive = true;
+                        timeChallengeElement.classList.add('time-critical');
+                    }
+                    
+                    // Check if time is up
+                    if (totalSeconds >= timeLimit) {
+                        endGame(true);
+                    }
                 }
                 
-                // Check if time is up
-                if (totalSeconds >= timeLimit) {
+                // Check for memory master mode (limited moves)
+                if (gameMode === 'memory-master' && movesCount >= totalPairs * 3) {
                     endGame(true);
                 }
+            }
+            
+            function updateProgressBar() {
+                const progress = (matchedPairs / totalPairs) * 100;
+                progressBar.style.width = `${progress}%`;
             }
             
             function endGame(timeUp = false) {
                 gameActive = false;
                 clearInterval(timerInterval);
-                playSound('gameOverSound');
+                
+                // Only play game over sound if the game was actually played
+                if (movesCount > 0 || matchedPairs > 0) {
+                    playSound('gameOverSound');
+                }
                 
                 // Calculate score
-                const timeScore = Math.max(0, 1000 - (minutes * 60 + seconds) * 10);
-                const movesScore = Math.max(0, 500 - movesCount * 15);
+                const timeScore = timeLimit > 0 ? Math.max(0, 1000 - (minutes * 60 + seconds) * 5) : 500;
+                const movesScore = Math.max(0, 500 - movesCount * 10);
                 const timeBonus = timeUp ? 0 : 500;
-                const totalScore = timeScore + movesScore + timeBonus;
+                const hintPenalty = hintsUsed * 50;
+                const comboBonus = comboCount * 20;
+                const difficultyMultiplier = totalPairs === 4 ? 1 : totalPairs === 6 ? 1.5 : totalPairs === 8 ? 2 : 2.5;
+                const totalScore = Math.floor((timeScore + movesScore + timeBonus + comboBonus - hintPenalty) * difficultyMultiplier);
+                
+                // Calculate star rating
+                let stars = 3;
+                if (timeUp) stars = 1;
+                else if (movesCount > totalPairs * 3) stars = 2;
+                
+                // Update star rating display
+                const starElements = starRatingElement.querySelectorAll('.star');
+                starElements.forEach((star, index) => {
+                    if (index < stars) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
                 
                 // Update modal content
                 if (timeUp) {
-                    gameResultElement.textContent = 'Time\'s Up!';
-                    gameResultTextElement.textContent = `You ran out of time! You matched ${matchedPairs} out of ${totalPairs} pairs.`;
+                    if (gameMode === 'memory-master') {
+                        gameResultElement.textContent = 'Out of Moves!';
+                        gameResultTextElement.textContent = `You used all your moves! You matched ${matchedPairs} out of ${totalPairs} pairs.`;
+                    } else {
+                        gameResultElement.textContent = 'Time\'s Up!';
+                        gameResultTextElement.textContent = `You ran out of time! You matched ${matchedPairs} out of ${totalPairs} pairs.`;
+                    }
                 } else {
                     gameResultElement.textContent = 'Congratulations!';
                     gameResultTextElement.textContent = `You matched all ${totalPairs} pairs in ${movesCount} moves and ${minutes}:${seconds < 10 ? '0' + seconds : seconds}!`;
                 }
                 finalScoreElement.textContent = totalScore;
                 
+                // Update score breakdown
+                scoreBreakdownElement.innerHTML = `
+                    <div class="score-item">
+                        <span class="score-label">Time Score:</span>
+                        <span class="score-value">${timeScore}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Moves Score:</span>
+                        <span class="score-value">${movesScore}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Time Bonus:</span>
+                        <span class="score-value">${timeBonus}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Combo Bonus:</span>
+                        <span class="score-value">${comboBonus}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Hint Penalty:</span>
+                        <span class="score-value">-${hintPenalty}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Difficulty Multiplier:</span>
+                        <span class="score-value">x${difficultyMultiplier}</span>
+                    </div>
+                `;
+                
+                // Save to leaderboard if score is high enough
+                saveToLeaderboard(totalScore, minutes * 60 + seconds, movesCount);
+                
                 // Show game over modal
                 setTimeout(() => {
                     gameOverModal.classList.add('active');
                 }, 1000);
+            }
+            
+            function saveToLeaderboard(score, time, moves) {
+                const entry = {
+                    score: score,
+                    time: time,
+                    moves: moves,
+                    difficulty: totalPairs,
+                    date: new Date().toLocaleDateString()
+                };
+                
+                leaderboard.push(entry);
+                
+                // Sort by score (descending)
+                leaderboard.sort((a, b) => b.score - a.score);
+                
+                // Keep only top 10 scores
+                leaderboard = leaderboard.slice(0, 10);
+                
+                // Save to localStorage
+                localStorage.setItem('matchingCardsLeaderboard', JSON.stringify(leaderboard));
+            }
+            
+            function showLeaderboard() {
+                // Create leaderboard modal
+                const leaderboardModal = document.createElement('div');
+                leaderboardModal.className = 'game-over-modal active';
+                leaderboardModal.innerHTML = `
+                    <div class="modal-content">
+                        <h2>Leaderboard</h2>
+                        <div class="score-breakdown" style="max-height: 300px; overflow-y: auto;">
+                            ${leaderboard.length > 0 ? 
+                                leaderboard.map((entry, index) => `
+                                    <div class="score-item" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                                            <span>#${index + 1}</span>
+                                            <span>Score: ${entry.score}</span>
+                                            <span>Time: ${Math.floor(entry.time / 60)}:${entry.time % 60 < 10 ? '0' : ''}${entry.time % 60}</span>
+                                            <span>Moves: ${entry.moves}</span>
+                                        </div>
+                                        <div style="font-size: 0.8rem; color: #a29bfe; margin-top: 5px;">
+                                            ${entry.date} - ${entry.difficulty * 2} cards
+                                        </div>
+                                    </div>
+                                `).join('') : 
+                                '<p style="text-align: center; padding: 20px;">No scores yet. Play a game to get on the leaderboard!</p>'
+                            }
+                        </div>
+                        <div class="modal-buttons">
+                            <button class="control-btn primary" id="btnCloseLeaderboard">
+                                <i class="fas fa-times"></i>
+                                <span>Close</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(leaderboardModal);
+                
+                // Add event listener to close button
+                document.getElementById('btnCloseLeaderboard').addEventListener('click', function() {
+                    document.body.removeChild(leaderboardModal);
+                });
             }
             
             function resetGame() {
@@ -1636,7 +2173,7 @@
             }
             
             function showHint() {
-                if (!gameActive || flippedCards.length > 0) return;
+                if (!gameActive || flippedCards.length > 0 || hintsUsed >= maxHints) return;
                 
                 // Find two unmatched cards that are the same
                 const unmatchedCards = cards.filter(card => !card.classList.contains('matched'));
@@ -1654,14 +2191,22 @@
                 }
                 
                 if (hintCards.length === 2) {
+                    hintsUsed++;
+                    hintCounterElement.textContent = maxHints - hintsUsed;
+                    
                     // Temporarily highlight the hint cards
-                    hintCards[0].style.boxShadow = '0 0 20px #fdcb6e';
-                    hintCards[1].style.boxShadow = '0 0 20px #fdcb6e';
+                    hintCards[0].classList.add('hint-highlight');
+                    hintCards[1].classList.add('hint-highlight');
                     
                     setTimeout(() => {
-                        hintCards[0].style.boxShadow = '';
-                        hintCards[1].style.boxShadow = '';
+                        hintCards[0].classList.remove('hint-highlight');
+                        hintCards[1].classList.remove('hint-highlight');
                     }, 2000);
+                    
+                    // Disable hint button if max hints reached
+                    if (hintsUsed >= maxHints) {
+                        document.getElementById('btnHint').disabled = true;
+                    }
                 }
             }
             
@@ -1733,9 +2278,9 @@
             document.getElementById('btnHint').addEventListener('click', showHint);
             
             // Difficulty selection
-            document.querySelectorAll('.difficulty-option').forEach(option => {
+            document.querySelectorAll('.difficulty-option[data-difficulty]').forEach(option => {
                 option.addEventListener('click', function() {
-                    document.querySelectorAll('.difficulty-option').forEach(opt => opt.classList.remove('selected'));
+                    document.querySelectorAll('.difficulty-option[data-difficulty]').forEach(opt => opt.classList.remove('selected'));
                     this.classList.add('selected');
                     
                     const difficulty = this.getAttribute('data-difficulty');
@@ -1743,9 +2288,20 @@
                         totalPairs = 4;
                     } else if (difficulty === 'medium') {
                         totalPairs = 6;
-                    } else {
+                    } else if (difficulty === 'hard') {
                         totalPairs = 8;
+                    } else {
+                        totalPairs = 10;
                     }
+                });
+            });
+            
+            // Game mode selection
+            document.querySelectorAll('.difficulty-option[data-mode]').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.difficulty-option[data-mode]').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    gameMode = this.getAttribute('data-mode');
                 });
             });
             
@@ -1782,6 +2338,9 @@
                 }
             });
             
+            // Leaderboard button
+            document.getElementById('leaderboardBtn').addEventListener('click', showLeaderboard);
+            
             // Bot Assistant Functionality
             document.getElementById('botToggle').addEventListener('click', function() {
                 document.getElementById('botAssistant').classList.toggle('active');
@@ -1814,13 +2373,13 @@
                     let response = '';
                     switch(question) {
                         case 'matching-rules':
-                            response = 'Matching Cards is a memory game where you flip two cards at a time to find matching pairs. If the cards match, they stay face up. If not, they flip back over. The goal is to match all pairs with the fewest moves and in the shortest time.';
+                            response = 'Matching Cards is a memory game where you flip two cards at a time to find matching pairs. If the cards match, they stay face up. If not, they flip back over. The goal is to match all pairs with the fewest moves and in the shortest time. Try to build combos by making consecutive matches for bonus points!';
                             break;
                         case 'matching-strategy':
-                            response = 'Memory improvement tips: 1) Focus on card positions rather than individual cards. 2) Create mental associations between card positions. 3) Try to remember pairs you\'ve seen before. 4) Start from one corner and work systematically. 5) Use the hint feature if you get stuck.';
+                            response = 'Memory improvement tips: 1) Focus on card positions rather than individual cards. 2) Create mental associations between card positions. 3) Try to remember pairs you\'ve seen before. 4) Start from one corner and work systematically. 5) Use the hint feature if you get stuck (max 3 per game). 6) Build combos by making consecutive matches.';
                             break;
                         case 'matching-scoring':
-                            response = 'Scoring is based on time and moves. You get more points for completing the game quickly and with fewer moves. The maximum score is 1500 points (1000 for time + 500 for moves). Your final score decreases based on how long you take and how many moves you make.';
+                            response = 'Scoring is based on time, moves, and combos. You get more points for completing the game quickly and with fewer moves. The maximum base score is 1500 points (1000 for time + 500 for moves). You earn bonus points for combos and lose points for using hints. Higher difficulty levels multiply your final score.';
                             break;
                     }
                     

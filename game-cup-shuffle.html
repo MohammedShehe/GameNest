@@ -1263,6 +1263,10 @@
             let isSelecting = false;
             let gameActive = false;
             let ballElements = [];
+            let maxRounds = 10;
+            
+            // Track cup positions in the DOM
+            let cupPositions = [1, 2, 3]; // Track which cup is in which position
             
             // Bot typing state
             let isBotTyping = false;
@@ -1272,6 +1276,7 @@
                 score = 0;
                 round = 1;
                 streak = 0;
+                cupPositions = [1, 2, 3]; // Reset cup positions
                 updateUI();
                 resetCups();
                 createBalls();
@@ -1311,6 +1316,7 @@
                     cup.classList.remove('selected', 'lifted', 'shuffling', 'show-number', 'shuffling-3d', 'flipping');
                     cup.style.transform = '';
                     cup.style.transition = '';
+                    cup.style.cursor = 'default';
                 });
                 
                 // Hide all balls
@@ -1337,6 +1343,10 @@
                 
                 // Randomly position the ball
                 ballPosition = Math.floor(Math.random() * 3) + 1;
+                console.log("Ball is under cup:", ballPosition); // Debug log
+                
+                // Reset cup positions tracking
+                cupPositions = [1, 2, 3];
                 
                 // Show the ball briefly before shuffling
                 const initialBall = document.getElementById(`ball-${ballPosition}`);
@@ -1354,8 +1364,8 @@
             
             function performShuffle() {
                 // Calculate shuffle duration based on round
-                const shuffleDuration = Math.max(1000, 2000 - (round * 100));
-                const shuffleCount = Math.min(10, 5 + round);
+                const shuffleDuration = Math.max(600, 2000 - (round * 140));
+                const shuffleCount = Math.min(15, 5 + round);
                 
                 let shuffleStep = 0;
                 
@@ -1373,11 +1383,23 @@
                     
                     // Swap two random cups with more realistic animation
                     const cup1Index = Math.floor(Math.random() * 3);
-                    const cup2Index = (cup1Index + 1 + Math.floor(Math.random() * 2)) % 3;
+                    let cup2Index;
+                    do {
+                        cup2Index = Math.floor(Math.random() * 3);
+                    } while (cup2Index === cup1Index); // Ensure we swap different cups
                     
                     // Get the actual cup elements
                     const cup1 = cups[cup1Index];
                     const cup2 = cups[cup2Index];
+                    
+                    // Get the cup numbers (data-cup values)
+                    const cup1Number = parseInt(cup1.dataset.cup);
+                    const cup2Number = parseInt(cup2.dataset.cup);
+                    
+                    // Update cup positions tracking
+                    const temp = cupPositions[cup1Index];
+                    cupPositions[cup1Index] = cupPositions[cup2Index];
+                    cupPositions[cup2Index] = temp;
                     
                     // Calculate positions for smooth animation
                     const cup1Rect = cup1.getBoundingClientRect();
@@ -1394,13 +1416,6 @@
                     // Move cups to swap positions with slight elevation
                     cup1.style.transform = `translate(${cup2X - cup1X}px, -20px) rotateY(15deg)`;
                     cup2.style.transform = `translate(${cup1X - cup2X}px, -20px) rotateY(-15deg)`;
-                    
-                    // Update ball position tracking
-                    if (cup1.dataset.cup == ballPosition) {
-                        ballPosition = parseInt(cup2.dataset.cup);
-                    } else if (cup2.dataset.cup == ballPosition) {
-                        ballPosition = parseInt(cup1.dataset.cup);
-                    }
                     
                     shuffleStep++;
                     
@@ -1425,7 +1440,7 @@
                         cup2.style.transform = '';
                         
                         // Continue to next shuffle step
-                        setTimeout(shuffleStepFunction, 100);
+                        setTimeout(shuffleStepFunction, shuffleDuration / shuffleCount);
                     }, 500);
                 }
                 
@@ -1440,12 +1455,11 @@
                 // Show cup numbers after shuffling
                 cups.forEach(cup => {
                     cup.classList.add('show-number');
-                });
-                
-                // Enable cup selection
-                cups.forEach(cup => {
                     cup.style.cursor = 'pointer';
                 });
+                
+                console.log("Final ball position after shuffle:", ballPosition); // Debug log
+                console.log("Cup positions after shuffle:", cupPositions); // Debug log
             }
             
             function selectCup(selectedCup) {
@@ -1453,6 +1467,15 @@
                 
                 isSelecting = false;
                 const selectedCupNumber = parseInt(selectedCup.dataset.cup);
+                
+                console.log("User selected cup:", selectedCupNumber); // Debug log
+                console.log("Ball is actually under cup:", ballPosition); // Debug log
+                
+                // Find the actual position of the selected cup
+                const selectedCupIndex = Array.from(cups).indexOf(selectedCup);
+                const actualCupNumber = cupPositions[selectedCupIndex];
+                
+                console.log("Selected cup is actually cup number:", actualCupNumber); // Debug log
                 
                 // Highlight selected cup
                 cups.forEach(cup => cup.classList.remove('selected'));
@@ -1470,7 +1493,7 @@
                     
                     // Check if the selection is correct
                     setTimeout(() => {
-                        if (selectedCupNumber === ballPosition) {
+                        if (actualCupNumber === ballPosition) {
                             handleCorrectGuess();
                         } else {
                             handleWrongGuess();
@@ -1480,6 +1503,7 @@
             }
             
             function handleCorrectGuess() {
+                console.log("Correct guess!"); // Debug log
                 playSound('correctSound');
                 
                 // Update score and streak
@@ -1488,8 +1512,12 @@
                 streak++;
                 
                 // Check for round completion
-                if (streak % 3 === 0) {
+                if (round < maxRounds) {
                     round++;
+                } else {
+                    // Player has completed all rounds
+                    endGame(true);
+                    return;
                 }
                 
                 updateUI();
@@ -1501,16 +1529,17 @@
             }
             
             function handleWrongGuess() {
+                console.log("Wrong guess!"); // Debug log
                 playSound('wrongSound');
                 
                 // Reset streak
                 streak = 0;
-                updateUI();
                 
                 // End game if score is 0, otherwise continue
                 if (score === 0) {
-                    endGame();
+                    endGame(false);
                 } else {
+                    updateUI();
                     // Prepare for next round
                     setTimeout(() => {
                         resetCups();
@@ -1518,12 +1547,18 @@
                 }
             }
             
-            function endGame() {
+            function endGame(isVictory) {
                 gameActive = false;
                 playSound('gameOverSound');
                 
-                gameResultElement.textContent = 'Game Over!';
-                gameResultTextElement.textContent = `You scored ${score} points!`;
+                if (isVictory) {
+                    gameResultElement.textContent = 'Victory!';
+                    gameResultTextElement.textContent = `You completed all ${maxRounds} rounds with ${score} points!`;
+                } else {
+                    gameResultElement.textContent = 'Game Over!';
+                    gameResultTextElement.textContent = `You scored ${score} points!`;
+                }
+                
                 finalScoreElement.textContent = score;
                 gameOverModal.classList.add('active');
             }
@@ -1652,7 +1687,7 @@
                             response = 'Focus on one cup from the start and try to track it through the 3D shuffles. The middle cup is often the hardest to track, so pay extra attention to it. Watch for the subtle 3D rotation effects that can help you track the cups.';
                             break;
                         case 'scoring-system':
-                            response = 'You earn 10 points times the current round for each correct guess. Your streak increases with consecutive correct guesses, and every 3 correct guesses advances you to the next round. Higher rounds have faster shuffles but also give more points.';
+                            response = 'You earn 10 points times the current round for each correct guess. Your streak increases with consecutive correct guesses, and every correct guess advances you to the next round. Higher rounds have faster shuffles but also give more points.';
                             break;
                     }
                     
