@@ -202,7 +202,7 @@
             color: #fd79a8;
         }
 
-        /* Bot Assistant Styles */
+        /* Enhanced Bot Assistant Styles */
         .bot-container {
             position: fixed;
             bottom: 30px;
@@ -236,7 +236,7 @@
             position: absolute;
             bottom: 80px;
             right: 0;
-            width: 320px;
+            width: 350px;
             background: var(--card-bg);
             backdrop-filter: blur(15px);
             border-radius: var(--border-radius);
@@ -246,6 +246,7 @@
             opacity: 0;
             visibility: hidden;
             transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .bot-assistant.active {
@@ -260,6 +261,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .bot-header h3 {
@@ -283,10 +285,17 @@
             font-size: 1.2rem;
             cursor: pointer;
             transition: var(--transition);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .bot-close:hover {
             transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .bot-content {
@@ -297,6 +306,16 @@
             margin-bottom: 20px;
             max-height: 200px;
             overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .bot-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .bot-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
 
         .bot-message {
@@ -304,6 +323,7 @@
             padding: 12px 16px;
             border-radius: 12px;
             margin-bottom: 10px;
+            border-left: 3px solid var(--primary-color);
         }
 
         .bot-message p {
@@ -340,10 +360,23 @@
             animation-delay: 0.4s;
         }
 
+        /* Enhanced Bot Questions Styling */
         .bot-questions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .bot-questions::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .bot-questions::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
 
         .bot-question {
@@ -356,11 +389,53 @@
             cursor: pointer;
             transition: var(--transition);
             font-size: 0.9rem;
+            width: 100%;
+            border: 1px solid transparent;
+            position: relative;
         }
 
         .bot-question:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .bot-question::before {
+            content: '💡';
+            margin-right: 8px;
+            font-size: 0.8rem;
+        }
+
+        /* Category grouping visual cues */
+        .bot-question[data-question*="-help"]::before {
+            content: '🎮';
+        }
+
+        .bot-question[data-question="recommendation"]::before,
+        .bot-question[data-question="quick-game"]::before,
+        .bot-question[data-question="multiplayer"]::before {
+            content: '⭐';
+        }
+
+        .bot-question[data-question="beginner-friendly"]::before,
+        .bot-question[data-question="challenging"]::before {
+            content: '📊';
+        }
+
+        .bot-question[data-question="high-scores"]::before,
+        .bot-question[data-question="strategy"]::before {
+            content: '🏆';
+        }
+
+        .bot-question[data-question="how-to-play"]::before,
+        .bot-question[data-question="controls"]::before,
+        .bot-question[data-question="sound-music"]::before {
+            content: '❓';
+        }
+
+        .bot-question[data-question="fun-fact"]::before,
+        .bot-question[data-question="popular"]::before {
+            content: '😊';
         }
 
         /* Music Toggle */
@@ -452,7 +527,7 @@
             }
             
             .bot-assistant {
-                width: 280px;
+                width: 320px;
             }
             
             .page-header {
@@ -481,7 +556,19 @@
             }
             
             .bot-assistant {
+                width: 280px;
+                right: -10px;
+            }
+            
+            .bot-questions {
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .bot-assistant {
                 width: 260px;
+                right: -20px;
             }
         }
     </style>
@@ -562,7 +649,7 @@
             </div>
         </main>
 
-        <!-- Bot Assistant -->
+        <!-- Enhanced Bot Assistant -->
         <div class="bot-container">
             <button class="bot-toggle" id="botToggle">
                 <i class="fas fa-question-circle"></i>
@@ -581,11 +668,70 @@
                         </div>
                     </div>
                     <div class="bot-questions">
+                        <!-- Game Help Section -->
                         <button class="bot-question" data-question="snake-help">
                             <span>How to play Snake?</span>
                         </button>
+                        <button class="bot-question" data-question="matching-help">
+                            <span>How to play Matching Cards?</span>
+                        </button>
+                        <button class="bot-question" data-question="ludo-help">
+                            <span>How to play Ludo?</span>
+                        </button>
+                        <button class="bot-question" data-question="candy-help">
+                            <span>How to play Candy Crush?</span>
+                        </button>
+                        <button class="bot-question" data-question="checkers-help">
+                            <span>How to play Checkers?</span>
+                        </button>
+                        <button class="bot-question" data-question="cup-help">
+                            <span>How to play 3D Cup Shuffle?</span>
+                        </button>
+                        
+                        <!-- Recommendations Section -->
                         <button class="bot-question" data-question="recommendation">
                             <span>Game recommendations</span>
+                        </button>
+                        <button class="bot-question" data-question="quick-game">
+                            <span>Quick games (5 mins)</span>
+                        </button>
+                        <button class="bot-question" data-question="multiplayer">
+                            <span>Multiplayer games</span>
+                        </button>
+                        
+                        <!-- Difficulty Section -->
+                        <button class="bot-question" data-question="beginner-friendly">
+                            <span>Beginner-friendly games</span>
+                        </button>
+                        <button class="bot-question" data-question="challenging">
+                            <span>Challenging games</span>
+                        </button>
+                        
+                        <!-- Features Section -->
+                        <button class="bot-question" data-question="high-scores">
+                            <span>High score games</span>
+                        </button>
+                        <button class="bot-question" data-question="strategy">
+                            <span>Strategy games</span>
+                        </button>
+                        
+                        <!-- General Help Section -->
+                        <button class="bot-question" data-question="how-to-play">
+                            <span>How to play any game?</span>
+                        </button>
+                        <button class="bot-question" data-question="controls">
+                            <span>Game controls</span>
+                        </button>
+                        <button class="bot-question" data-question="sound-music">
+                            <span>Sound & music</span>
+                        </button>
+                        
+                        <!-- Fun Section -->
+                        <button class="bot-question" data-question="fun-fact">
+                            <span>Fun facts</span>
+                        </button>
+                        <button class="bot-question" data-question="popular">
+                            <span>Popular games</span>
                         </button>
                     </div>
                 </div>
@@ -662,7 +808,7 @@
                 isMusicPlaying = !isMusicPlaying;
             });
             
-            // Bot Assistant Functionality
+            // Enhanced Bot Assistant Functionality
             const botToggle = document.getElementById('botToggle');
             const botAssistant = document.getElementById('botAssistant');
             const botClose = document.getElementById('botClose');
@@ -671,10 +817,52 @@
             
             // Bot responses for games page
             const botResponses = {
+                // Game-specific help
                 "snake-help": "In Snake, use arrow keys to control your snake. Eat food to grow longer, but avoid hitting walls or your own tail! The game gets faster as you progress. Try to achieve the highest score possible!",
-                "recommendation": "Based on popularity, I'd recommend Snake for quick fun, Ludo for multiplayer enjoyment, or Matching Cards to test your memory. New players often enjoy Fruits Matching as it's colorful and engaging!"
+                
+                "matching-help": "Matching Cards tests your memory! Flip cards to find matching pairs. Match all pairs with the fewest moves to get high scores. Use hints wisely - you only get 3 per game! Build combos for bonus points.",
+                
+                "ludo-help": "Ludo is a classic board game! Roll a 6 to move pieces out of home. Move around the board clockwise and capture opponents' pieces. First to get all 4 pieces to the center wins! Watch out for three consecutive 6s - they send all your pieces back home!",
+                
+                "candy-help": "Candy Crush is a sweet match-3 puzzle! Swap adjacent candies to make matches of 3 or more. Create special candies by matching 4 or 5 in a row. Complete level goals before running out of moves for the highest scores!",
+                
+                "checkers-help": "Checkers is a strategic board game! Move diagonally and capture opponents by jumping over their pieces. Reach the opposite side to become a King - they can move and capture both forward and backward! Remember: captures are mandatory when available.",
+                
+                "cup-help": "3D Cup Shuffle will test your observation skills! Watch carefully as cups shuffle in 3D space. Track the ball and select the correct cup after shuffling. Higher rounds have faster shuffles - stay focused to maintain your winning streak!",
+                
+                // Game recommendations
+                "recommendation": "Based on popularity, I'd recommend:\n• Snake for quick arcade fun\n• Ludo for multiplayer enjoyment  \n• Matching Cards to test your memory\n• Candy Crush for puzzle lovers\n• Checkers for strategic thinkers\n• 3D Cup Shuffle for observation challenges",
+                
+                "quick-game": "For a quick 5-minute game, try:\n• Snake (fast-paced action)\n• Matching Cards (memory challenge)\n• 3D Cup Shuffle (quick rounds)",
+                
+                "multiplayer": "For multiplayer fun:\n• Ludo (2-4 players with AI options)\n• Checkers (2-player strategy)\nPerfect for playing with friends!",
+                
+                // Difficulty levels
+                "beginner-friendly": "Great starting games for beginners:\n• Matching Cards (easy to learn)\n• Candy Crush (colorful and fun)\n• Snake (simple controls)",
+                
+                "challenging": "Looking for a challenge? Try:\n• Checkers (deep strategy)\n• Ludo (tactical decisions)\n• 3D Cup Shuffle (observation skills)",
+                
+                // Game features
+                "high-scores": "Compete for high scores in:\n• Snake (endless scoring)\n• Candy Crush (level-based)\n• Matching Cards (efficiency matters)",
+                
+                "strategy": "Strategic games that require planning:\n• Checkers (positional play)\n• Ludo (risk management)\n• Candy Crush (move optimization)",
+                
+                // General help
+                "how-to-play": "Each game has detailed instructions! Click the 'How to Play' section in any game to learn the rules. The bot assistant (MO11 🤖) is also available in each game for specific tips and strategies.",
+                
+                "controls": "Game controls vary:\n• Mouse/Touch: Most games\n• Arrow Keys: Snake game\n• Both: Candy Crush & others\nEach game has optimized controls for your device!",
+                
+                "sound-music": "All games feature background music and sound effects! Use the music toggle button (🎵) in the bottom-left to control audio. Sound enhances the gaming experience!",
+                
+                // Fun facts
+                "fun-fact": "Did you know? GameNest features 6 completely different games, each with unique mechanics and challenges. From classic board games to modern puzzles, there's something for everyone!",
+                
+                "popular": "Most popular games this week:\n1. Snake 🐍\n2. Candy Crush 🍭\n3. Ludo 🎲\nAll games are trending with players!",
+                
+                // Default response
+                "default": "I'm here to help you with GameNest! Ask me about:\n• Game rules and how to play\n• Game recommendations\n• Tips and strategies\n• Controls and features\nJust tell me what you'd like to know! 🎮"
             };
-            
+
             // Toggle bot visibility
             botToggle.addEventListener('click', function() {
                 botAssistant.classList.toggle('active');
@@ -685,11 +873,18 @@
                 botAssistant.classList.remove('active');
             });
             
-            // Handle bot questions
+            // Close bot when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!botAssistant.contains(event.target) && !botToggle.contains(event.target) && botAssistant.classList.contains('active')) {
+                    botAssistant.classList.remove('active');
+                }
+            });
+            
+            // Enhanced bot question handling
             botQuestions.forEach(question => {
                 question.addEventListener('click', function() {
                     const questionType = this.getAttribute('data-question');
-                    const response = botResponses[questionType];
+                    const response = botResponses[questionType] || botResponses["default"];
                     
                     // Create typing indicator
                     const typingIndicator = document.createElement('div');
@@ -707,29 +902,46 @@
                     
                     // Remove typing indicator and show response after delay
                     setTimeout(() => {
-                        botMessages.removeChild(typingIndicator);
+                        if (botMessages.contains(typingIndicator)) {
+                            botMessages.removeChild(typingIndicator);
+                        }
                         typeMessage(response);
                     }, 1500);
                 });
             });
             
-            // Function to type message character by character
+            // Enhanced typing function with line breaks support
             function typeMessage(message) {
                 const messageElement = document.createElement('div');
                 messageElement.className = 'bot-message';
-                const messageText = document.createElement('p');
-                messageElement.appendChild(messageText);
                 botMessages.appendChild(messageElement);
                 
                 let i = 0;
-                const typingSpeed = 30; // milliseconds per character
+                const typingSpeed = 20; // milliseconds per character
+                let currentLine = '';
                 
                 function typeCharacter() {
                     if (i < message.length) {
-                        messageText.textContent += message.charAt(i);
+                        const char = message.charAt(i);
+                        
+                        if (char === '\n') {
+                            // Handle line breaks
+                            const lineBreak = document.createElement('br');
+                            messageElement.appendChild(document.createTextNode(currentLine));
+                            messageElement.appendChild(lineBreak);
+                            currentLine = '';
+                        } else {
+                            currentLine += char;
+                        }
+                        
                         i++;
                         botMessages.scrollTop = botMessages.scrollHeight;
                         setTimeout(typeCharacter, typingSpeed);
+                    } else {
+                        // Add remaining text
+                        if (currentLine) {
+                            messageElement.appendChild(document.createTextNode(currentLine));
+                        }
                     }
                 }
                 
@@ -763,7 +975,16 @@
                 card.addEventListener('click', function() {
                     const game = this.getAttribute('data-game');
                     
-                    window.location.href = `game-${game}.html`;
+                    // Add click animation
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                    
+                    // Navigate to game page
+                    setTimeout(() => {
+                        window.location.href = `game-${game}.html`;
+                    }, 300);
                 });
             });
         });
