@@ -220,6 +220,13 @@
             z-index: 1;
         }
 
+        .stat.level-stat .stat-value {
+            font-size: 1.25rem;
+            color: #fd79a8;
+            text-shadow: 0 0 10px var(--accent-glow);
+            white-space: nowrap;
+        }
+
         .stat-label {
             font-size: 0.9rem;
             opacity: 0.9;
@@ -248,6 +255,7 @@
             align-items: flex-end;
             perspective: 1000px;
             width: 100%;
+            flex-wrap: nowrap;
         }
 
         .cup {
@@ -259,6 +267,7 @@
             z-index: 2;
             transform-style: preserve-3d;
             will-change: transform;
+            flex-shrink: 0;
         }
 
         .cup-body {
@@ -319,6 +328,7 @@
             z-index: 1;
             opacity: 0;
             transition: opacity 0.3s ease;
+            white-space: nowrap;
         }
 
         .cup.show-number .cup-number {
@@ -874,13 +884,7 @@
             }
             
             .cups-container {
-                gap: 20px;
                 height: 250px;
-            }
-            
-            .cup {
-                width: 100px;
-                height: 120px;
             }
             
             .game-controls {
@@ -948,13 +952,7 @@
             }
             
             .cups-container {
-                gap: 15px;
                 height: 220px;
-            }
-            
-            .cup {
-                width: 80px;
-                height: 100px;
             }
             
             .game-instructions {
@@ -1022,15 +1020,6 @@
             
             .stat-value {
                 font-size: 1.3rem;
-            }
-            
-            .cups-container {
-                gap: 10px;
-            }
-            
-            .cup {
-                width: 70px;
-                height: 90px;
             }
             
             .control-btn {
@@ -1106,36 +1095,26 @@
                         <div class="stat-label">SCORE</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value" id="round">1</div>
+                        <div class="stat-value" id="round">1/20</div>
                         <div class="stat-label">ROUND</div>
                     </div>
                     <div class="stat">
                         <div class="stat-value" id="streak">0</div>
                         <div class="stat-label">STREAK</div>
                     </div>
+                    <div class="stat level-stat">
+                        <div class="stat-value" id="level">Slowest</div>
+                        <div class="stat-label">LEVEL</div>
+                    </div>
                 </div>
             </div>
 
             <div class="game-area">
                 <div class="ball-container" id="ballContainer">
-                    <!-- Balls will be positioned here dynamically -->
+                    <!-- The ball is positioned here dynamically -->
                 </div>
                 <div class="cups-container" id="cupsContainer">
-                    <div class="cup" data-cup="1">
-                        <div class="cup-rim"></div>
-                        <div class="cup-body"></div>
-                        <div class="cup-number">1</div>
-                    </div>
-                    <div class="cup" data-cup="2">
-                        <div class="cup-rim"></div>
-                        <div class="cup-body"></div>
-                        <div class="cup-number">2</div>
-                    </div>
-                    <div class="cup" data-cup="3">
-                        <div class="cup-rim"></div>
-                        <div class="cup-body"></div>
-                        <div class="cup-number">3</div>
-                    </div>
+                    <!-- Cups are generated dynamically by JS based on the current level -->
                 </div>
             </div>
 
@@ -1144,7 +1123,7 @@
                     <i class="fas fa-play"></i>
                     <span>Start Round</span>
                 </button>
-                <button class="control-btn" id="btnReset" disabled>
+                <button class="control-btn" id="btnReset">
                     <i class="fas fa-redo"></i>
                     <span>Reset Game</span>
                 </button>
@@ -1158,8 +1137,8 @@
                     <li>After shuffling, numbers will appear under the cups</li>
                     <li>Select the cup you think contains the ball</li>
                     <li>Correct guesses increase your score and streak</li>
-                    <li>Higher rounds have faster and more complex shuffles</li>
-                    <li>Try to achieve the highest streak possible!</li>
+                    <li>Every round climbs a level - Slowest, Slower, Slow, Medium, Fast, Faster, Rapid, Lightning, Insane</li>
+                    <li>Higher levels shuffle faster, give you less time to peek, and add more cups to track</li>
                 </ul>
             </div>
         </main>
@@ -1241,76 +1220,124 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // ===== GAME VARIABLES =====
+        document.addEventListener('DOMContentLoaded', function () {
+            // ===== DOM ELEMENTS =====
             const cupsContainer = document.getElementById('cupsContainer');
             const ballContainer = document.getElementById('ballContainer');
-            const cups = document.querySelectorAll('.cup');
             const scoreElement = document.getElementById('score');
             const roundElement = document.getElementById('round');
             const streakElement = document.getElementById('streak');
+            const levelElement = document.getElementById('level');
             const gameOverModal = document.getElementById('gameOverModal');
             const gameResultElement = document.getElementById('gameResult');
             const gameResultTextElement = document.getElementById('gameResultText');
             const finalScoreElement = document.getElementById('finalScore');
-            
-            // Game state
+
+            // ===== LEVEL DEFINITIONS =====
+            // Each level controls how many cups are in play, how many swaps happen,
+            // how fast each swap is, and how long the player gets to "peek" at the
+            // ball before the shuffle starts. Levels get harder every round.
+            const LEVELS = [
+                { name: 'Slowest',   cups: 3, steps: 5,  stepTime: 750, peekTime: 1400 },
+                { name: 'Slower',    cups: 3, steps: 6,  stepTime: 650, peekTime: 1300 },
+                { name: 'Slow',      cups: 4, steps: 7,  stepTime: 580, peekTime: 1200 },
+                { name: 'Medium',    cups: 4, steps: 9,  stepTime: 500, peekTime: 1100 },
+                { name: 'Fast',      cups: 5, steps: 11, stepTime: 420, peekTime: 1000 },
+                { name: 'Faster',    cups: 5, steps: 13, stepTime: 360, peekTime: 900  },
+                { name: 'Rapid',     cups: 6, steps: 15, stepTime: 300, peekTime: 800  },
+                { name: 'Lightning', cups: 6, steps: 18, stepTime: 240, peekTime: 700  },
+                { name: 'Insane',    cups: 7, steps: 22, stepTime: 200, peekTime: 600  }
+            ];
+
+            const CUP_SIZES = { 3: 120, 4: 102, 5: 88, 6: 74, 7: 64 };
+            const CUP_GAPS  = { 3: 40,  4: 28,  5: 20,  6: 14,  7: 10 };
+
+            const maxRounds = 20;
+
+            // ===== GAME STATE =====
             let score = 0;
             let round = 1;
             let streak = 0;
-            let ballPosition = 1; // 1, 2, or 3
+            let cups = [];           // array of current cup elements, kept in sync with DOM order
+            let ballCupId = 1;       // the data-cup value of whichever cup currently holds the ball
+            let ballElement = null;  // the single ball DOM element
             let isShuffling = false;
             let isSelecting = false;
             let gameActive = false;
-            let ballElements = [];
-            let maxRounds = 10;
-            
-            // Track cup positions in the DOM
-            let cupPositions = [1, 2, 3]; // Track which cup is in which position
-            
-            // Bot typing state
-            let isBotTyping = false;
-            
-            // ===== GAME FUNCTIONS =====
+
+            function getLevel() {
+                const idx = Math.min(round - 1, LEVELS.length - 1);
+                return LEVELS[idx];
+            }
+
+            // ===== SETUP =====
             function initGame() {
                 score = 0;
                 round = 1;
                 streak = 0;
-                cupPositions = [1, 2, 3]; // Reset cup positions
+                gameActive = false;
+                isShuffling = false;
+                isSelecting = false;
                 updateUI();
-                resetCups();
-                createBalls();
+                setupRoundBoard();
             }
-            
-            function createBalls() {
-                // Clear existing balls
-                ballContainer.innerHTML = '';
-                ballElements = [];
-                
-                // Create balls for each cup position
-                cups.forEach(cup => {
-                    const ball = document.createElement('div');
-                    ball.className = 'ball-under-cup';
-                    ball.id = `ball-${cup.dataset.cup}`;
-                    
-                    // Position the ball under the cup
-                    const cupRect = cup.getBoundingClientRect();
-                    const containerRect = cupsContainer.getBoundingClientRect();
-                    
-                    ball.style.left = `${cupRect.left - containerRect.left + cupRect.width / 2}px`;
-                    ball.style.top = `${cupRect.bottom - containerRect.top}px`;
-                    
-                    ballContainer.appendChild(ball);
-                    ballElements.push(ball);
-                });
-            }
-            
+
             function updateUI() {
                 scoreElement.textContent = score;
-                roundElement.textContent = round;
+                roundElement.textContent = `${round}/${maxRounds}`;
                 streakElement.textContent = streak;
+                levelElement.textContent = getLevel().name;
             }
-            
+
+            // Builds the board (correct number of cups) for the level of the current round
+            function setupRoundBoard() {
+                const level = getLevel();
+                generateCups(level.cups);
+                resetCups();
+            }
+
+            function generateCups(n) {
+                cupsContainer.innerHTML = '';
+                const width = CUP_SIZES[n] || 60;
+                const height = Math.round(width * 1.17);
+                const gap = CUP_GAPS[n] || 8;
+                const numberFontSize = Math.max(0.85, (width / 120) * 1.5).toFixed(2);
+                cupsContainer.style.gap = `${gap}px`;
+
+                for (let i = 1; i <= n; i++) {
+                    const cup = document.createElement('div');
+                    cup.className = 'cup';
+                    cup.dataset.cup = String(i);
+                    cup.style.width = `${width}px`;
+                    cup.style.height = `${height}px`;
+
+                    const rim = document.createElement('div');
+                    rim.className = 'cup-rim';
+
+                    const body = document.createElement('div');
+                    body.className = 'cup-body';
+
+                    const number = document.createElement('div');
+                    number.className = 'cup-number';
+                    number.textContent = String(i);
+                    number.style.fontSize = `${numberFontSize}rem`;
+
+                    cup.appendChild(rim);
+                    cup.appendChild(body);
+                    cup.appendChild(number);
+
+                    cup.addEventListener('click', function () {
+                        if (isSelecting && !isShuffling) {
+                            selectCup(this);
+                        }
+                    });
+
+                    cupsContainer.appendChild(cup);
+                }
+
+                cups = Array.from(cupsContainer.querySelectorAll('.cup'));
+            }
+
             function resetCups() {
                 cups.forEach(cup => {
                     cup.classList.remove('selected', 'lifted', 'shuffling', 'show-number', 'shuffling-3d', 'flipping');
@@ -1318,114 +1345,114 @@
                     cup.style.transition = '';
                     cup.style.cursor = 'default';
                 });
-                
-                // Hide all balls
-                ballElements.forEach(ball => {
-                    ball.classList.remove('visible', 'bouncing');
-                });
-                
+
+                if (ballElement) {
+                    ballElement.classList.remove('visible', 'bouncing');
+                }
+
                 isShuffling = false;
                 isSelecting = false;
             }
-            
+
+            // ===== BALL HANDLING =====
+            // The ball's identity is tied to a cup's stable data-cup value, not to a
+            // fixed on-screen slot or a static element index. That value never changes
+            // for the life of a round, no matter how many times the cups are physically
+            // reordered in the DOM during the shuffle - so it can never drift out of
+            // sync with what the player actually sees.
+            function ensureBallElement() {
+                if (!ballElement) {
+                    ballElement = document.createElement('div');
+                    ballElement.className = 'ball-under-cup';
+                    ballElement.id = 'gameBall';
+                    ballContainer.appendChild(ballElement);
+                }
+            }
+
+            function findCupByDataNumber(num) {
+                return cups.find(cup => cup.dataset.cup === String(num)) || null;
+            }
+
+            function positionBallUnderCup(cupEl) {
+                if (!cupEl || !ballElement) return;
+                const cupRect = cupEl.getBoundingClientRect();
+                const containerRect = cupsContainer.getBoundingClientRect();
+                ballElement.style.left = `${cupRect.left - containerRect.left + cupRect.width / 2}px`;
+                ballElement.style.top = `${cupRect.bottom - containerRect.top}px`;
+            }
+
+            // ===== ROUND FLOW =====
             function startRound() {
-                if (isShuffling) return;
-                
+                if (isShuffling || isSelecting) return;
+
                 gameActive = true;
                 isShuffling = true;
                 isSelecting = false;
-                resetCups();
-                
-                // Hide cup numbers at the start
-                cups.forEach(cup => {
-                    cup.classList.remove('show-number');
-                });
-                
-                // Randomly position the ball
-                ballPosition = Math.floor(Math.random() * 3) + 1;
-                console.log("Ball is under cup:", ballPosition); // Debug log
-                
-                // Reset cup positions tracking
-                cupPositions = [1, 2, 3];
-                
-                // Show the ball briefly before shuffling
-                const initialBall = document.getElementById(`ball-${ballPosition}`);
-                initialBall.classList.add('visible', 'bouncing');
-                
-                // Play shuffle sound
+
+                setupRoundBoard();
+                ensureBallElement();
+
+                const level = getLevel();
+                const n = cups.length;
+
+                // Randomly assign the ball to one of this round's cups, by identity
+                ballCupId = Math.floor(Math.random() * n) + 1;
+
+                const ballCup = findCupByDataNumber(ballCupId);
+                positionBallUnderCup(ballCup);
+                ballElement.classList.add('visible', 'bouncing');
+
                 playSound('shuffleSound');
-                
-                // After a delay, hide the ball and start the actual shuffle
+
                 setTimeout(() => {
-                    initialBall.classList.remove('visible', 'bouncing');
-                    performShuffle();
-                }, 1000);
+                    ballElement.classList.remove('visible', 'bouncing');
+                    performShuffle(level);
+                }, level.peekTime);
             }
-            
-            function performShuffle() {
-                // Calculate shuffle duration based on round
-                const shuffleDuration = Math.max(600, 2000 - (round * 140));
-                const shuffleCount = Math.min(15, 5 + round);
-                
+
+            function performShuffle(level) {
                 let shuffleStep = 0;
-                
-                // Use requestAnimationFrame for smoother animations
+                const n = cups.length;
+
                 function shuffleStepFunction() {
-                    if (shuffleStep >= shuffleCount) {
+                    if (shuffleStep >= level.steps) {
                         finishShuffle();
                         return;
                     }
-                    
-                    // Add 3D shuffling effect
-                    cups.forEach(cup => {
-                        cup.classList.add('shuffling-3d');
-                    });
-                    
-                    // Swap two random cups with more realistic animation
-                    const cup1Index = Math.floor(Math.random() * 3);
-                    let cup2Index;
+
+                    cups.forEach(cup => cup.classList.add('shuffling-3d'));
+
+                    const idx1 = Math.floor(Math.random() * n);
+                    let idx2;
                     do {
-                        cup2Index = Math.floor(Math.random() * 3);
-                    } while (cup2Index === cup1Index); // Ensure we swap different cups
-                    
-                    // Get the actual cup elements
-                    const cup1 = cups[cup1Index];
-                    const cup2 = cups[cup2Index];
-                    
-                    // Get the cup numbers (data-cup values)
-                    const cup1Number = parseInt(cup1.dataset.cup);
-                    const cup2Number = parseInt(cup2.dataset.cup);
-                    
-                    // Update cup positions tracking
-                    const temp = cupPositions[cup1Index];
-                    cupPositions[cup1Index] = cupPositions[cup2Index];
-                    cupPositions[cup2Index] = temp;
-                    
-                    // Calculate positions for smooth animation
+                        idx2 = Math.floor(Math.random() * n);
+                    } while (idx2 === idx1);
+
+                    const cup1 = cups[idx1];
+                    const cup2 = cups[idx2];
+
                     const cup1Rect = cup1.getBoundingClientRect();
                     const cup2Rect = cup2.getBoundingClientRect();
                     const containerRect = cupsContainer.getBoundingClientRect();
-                    
+
                     const cup1X = cup1Rect.left - containerRect.left + cup1Rect.width / 2;
                     const cup2X = cup2Rect.left - containerRect.left + cup2Rect.width / 2;
-                    
-                    // Animate the swap with more realistic movement
+
                     cup1.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
                     cup2.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                    
-                    // Move cups to swap positions with slight elevation
+
                     cup1.style.transform = `translate(${cup2X - cup1X}px, -20px) rotateY(15deg)`;
                     cup2.style.transform = `translate(${cup1X - cup2X}px, -20px) rotateY(-15deg)`;
-                    
+
                     shuffleStep++;
-                    
-                    // After animation completes, reset transforms and swap in DOM
+
                     setTimeout(() => {
-                        // Swap in DOM
+                        // Physically swap the two cups' DOM position so the visual
+                        // order always matches the animation that was just played.
                         const parent = cupsContainer;
                         const cup1Next = cup1.nextElementSibling;
                         const cup2Next = cup2.nextElementSibling;
-                        
+
                         if (cup1Next === cup2) {
                             parent.insertBefore(cup2, cup1);
                         } else if (cup2Next === cup1) {
@@ -1434,66 +1461,56 @@
                             parent.insertBefore(cup2, cup1Next);
                             parent.insertBefore(cup1, cup2Next);
                         }
-                        
-                        // Reset transforms
+
                         cup1.style.transform = '';
                         cup2.style.transform = '';
-                        
-                        // Continue to next shuffle step
-                        setTimeout(shuffleStepFunction, shuffleDuration / shuffleCount);
+
+                        // Keep our reference array in sync with the real DOM order
+                        cups = Array.from(cupsContainer.querySelectorAll('.cup'));
+
+                        setTimeout(shuffleStepFunction, level.stepTime);
                     }, 500);
                 }
-                
-                // Start the shuffle sequence
+
                 shuffleStepFunction();
             }
-            
+
             function finishShuffle() {
                 isShuffling = false;
                 isSelecting = true;
-                
-                // Show cup numbers after shuffling
+
                 cups.forEach(cup => {
+                    cup.classList.remove('shuffling-3d');
                     cup.classList.add('show-number');
                     cup.style.cursor = 'pointer';
                 });
-                
-                console.log("Final ball position after shuffle:", ballPosition); // Debug log
-                console.log("Cup positions after shuffle:", cupPositions); // Debug log
             }
-            
+
             function selectCup(selectedCup) {
                 if (!isSelecting || isShuffling) return;
-                
+
                 isSelecting = false;
-                const selectedCupNumber = parseInt(selectedCup.dataset.cup);
-                
-                console.log("User selected cup:", selectedCupNumber); // Debug log
-                console.log("Ball is actually under cup:", ballPosition); // Debug log
-                
-                // Find the actual position of the selected cup
-                const selectedCupIndex = Array.from(cups).indexOf(selectedCup);
-                const actualCupNumber = cupPositions[selectedCupIndex];
-                
-                console.log("Selected cup is actually cup number:", actualCupNumber); // Debug log
-                
-                // Highlight selected cup
+
+                // Correctness is decided purely by comparing the clicked cup's own
+                // stable identity against the ball's assigned identity - no
+                // separate position-tracking array involved, so there is nothing
+                // left that can fall out of sync with the visuals.
+                const isCorrect = selectedCup.dataset.cup === String(ballCupId);
+
                 cups.forEach(cup => cup.classList.remove('selected'));
                 selectedCup.classList.add('selected');
-                
-                // Lift all cups to reveal the ball
+
                 setTimeout(() => {
-                    cups.forEach(cup => {
-                        cup.classList.add('lifted');
-                    });
-                    
-                    // Show the ball
-                    const ball = document.getElementById(`ball-${ballPosition}`);
-                    ball.classList.add('visible', 'bouncing');
-                    
-                    // Check if the selection is correct
+                    // Find wherever the winning cup currently sits and reveal the
+                    // ball right there.
+                    const winningCup = findCupByDataNumber(ballCupId);
+                    positionBallUnderCup(winningCup);
+
+                    cups.forEach(cup => cup.classList.add('lifted'));
+                    ballElement.classList.add('visible', 'bouncing');
+
                     setTimeout(() => {
-                        if (actualCupNumber === ballPosition) {
+                        if (isCorrect) {
                             handleCorrectGuess();
                         } else {
                             handleWrongGuess();
@@ -1501,90 +1518,77 @@
                     }, 500);
                 }, 500);
             }
-            
+
             function handleCorrectGuess() {
-                console.log("Correct guess!"); // Debug log
                 playSound('correctSound');
-                
-                // Update score and streak
-                const pointsEarned = 10 * round;
-                score += pointsEarned;
+
+                score += 10 * round;
                 streak++;
-                
-                // Check for round completion
+
                 if (round < maxRounds) {
                     round++;
+                    updateUI();
+                    setTimeout(() => {
+                        resetCups();
+                    }, 1500);
                 } else {
-                    // Player has completed all rounds
+                    updateUI();
                     endGame(true);
-                    return;
                 }
-                
-                updateUI();
-                
-                // Prepare for next round
-                setTimeout(() => {
-                    resetCups();
-                }, 2000);
             }
-            
+
             function handleWrongGuess() {
-                console.log("Wrong guess!"); // Debug log
                 playSound('wrongSound');
-                
-                // Reset streak
                 streak = 0;
-                
-                // End game if score is 0, otherwise continue
+
                 if (score === 0) {
+                    updateUI();
                     endGame(false);
                 } else {
                     updateUI();
-                    // Prepare for next round
                     setTimeout(() => {
                         resetCups();
-                    }, 2000);
+                    }, 1500);
                 }
             }
-            
+
             function endGame(isVictory) {
                 gameActive = false;
                 playSound('gameOverSound');
-                
+
                 if (isVictory) {
                     gameResultElement.textContent = 'Victory!';
-                    gameResultTextElement.textContent = `You completed all ${maxRounds} rounds with ${score} points!`;
+                    gameResultTextElement.textContent = `You conquered all ${maxRounds} rounds with ${score} points!`;
                 } else {
                     gameResultElement.textContent = 'Game Over!';
                     gameResultTextElement.textContent = `You scored ${score} points!`;
                 }
-                
+
                 finalScoreElement.textContent = score;
                 gameOverModal.classList.add('active');
             }
-            
+
             function playSound(soundId) {
                 const sound = document.getElementById(soundId);
                 if (sound) {
                     sound.currentTime = 0;
-                    sound.play().catch(e => console.log("Sound play prevented:", e));
+                    sound.play().catch(e => console.log('Sound play prevented:', e));
                 }
             }
-            
-            // Bot typing function
+
+            // ===== BOT ASSISTANT =====
+            let isBotTyping = false;
+
             function typeMessage(message, messageDiv, callback) {
                 if (isBotTyping) return;
-                
                 isBotTyping = true;
                 let index = 0;
                 messageDiv.innerHTML = '';
-                
+
                 const typingInterval = setInterval(() => {
                     if (index < message.length) {
                         messageDiv.innerHTML += message.charAt(index);
                         index++;
-                        
-                        // Scroll to bottom of messages
                         const messages = document.querySelector('.bot-messages');
                         messages.scrollTop = messages.scrollHeight;
                     } else {
@@ -1592,77 +1596,59 @@
                         isBotTyping = false;
                         if (callback) callback();
                     }
-                }, 30); // Adjust typing speed here (milliseconds per character)
+                }, 30);
             }
-            
+
             // ===== EVENT LISTENERS =====
-            document.getElementById('btnStartRound').addEventListener('click', function() {
-                if (!isShuffling && !isSelecting) {
-                    startRound();
-                }
+            document.getElementById('btnStartRound').addEventListener('click', function () {
+                startRound();
             });
-            
+
             document.getElementById('btnReset').addEventListener('click', initGame);
-            
-            document.getElementById('btnPlayAgain').addEventListener('click', function() {
+
+            document.getElementById('btnPlayAgain').addEventListener('click', function () {
                 gameOverModal.classList.remove('active');
                 initGame();
             });
-            
-            document.getElementById('btnBackToGames').addEventListener('click', function() {
+
+            document.getElementById('btnBackToGames').addEventListener('click', function () {
                 window.location.href = 'games.html';
             });
-            
-            document.getElementById('btnBack').addEventListener('click', function() {
+
+            document.getElementById('btnBack').addEventListener('click', function () {
                 window.location.href = 'games.html';
             });
-            
-            document.getElementById('btnExit').addEventListener('click', function() {
+
+            document.getElementById('btnExit').addEventListener('click', function () {
                 if (confirm('Are you sure you want to exit GameNest?')) {
                     window.location.href = 'index.html';
                 }
             });
-            
-            // Cup selection
-            cups.forEach(cup => {
-                cup.addEventListener('click', function() {
-                    if (isSelecting && !isShuffling) {
-                        selectCup(this);
-                    }
-                });
-            });
-            
-            // Bot Assistant Functionality
-            document.getElementById('botToggle').addEventListener('click', function() {
+
+            document.getElementById('botToggle').addEventListener('click', function () {
                 document.getElementById('botAssistant').classList.toggle('active');
             });
-            
-            document.getElementById('botClose').addEventListener('click', function() {
+
+            document.getElementById('botClose').addEventListener('click', function () {
                 document.getElementById('botAssistant').classList.remove('active');
             });
-            
-            // Music Toggle Functionality
+
             const musicToggle = document.getElementById('musicToggle');
             const backgroundMusic = document.getElementById('backgroundMusic');
-            
-            // Auto-play background music on page load
-            window.addEventListener('load', function() {
-                // Try to play background music automatically
+
+            window.addEventListener('load', function () {
                 const playPromise = backgroundMusic.play();
-                
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        // Auto-play started successfully
                         musicToggle.classList.add('playing');
                     }).catch(error => {
-                        // Auto-play was prevented, show the play button
-                        console.log("Auto-play prevented:", error);
+                        console.log('Auto-play prevented:', error);
                         musicToggle.classList.remove('playing');
                     });
                 }
             });
-            
-            musicToggle.addEventListener('click', function() {
+
+            musicToggle.addEventListener('click', function () {
                 if (backgroundMusic.paused) {
                     backgroundMusic.play();
                     musicToggle.classList.add('playing');
@@ -1671,80 +1657,66 @@
                     musicToggle.classList.remove('playing');
                 }
             });
-            
-            // Bot Questions
+
             document.querySelectorAll('.bot-question').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     const question = this.getAttribute('data-question');
                     const messages = document.querySelector('.bot-messages');
-                    
+
                     let response = '';
-                    switch(question) {
+                    switch (question) {
                         case 'game-rules':
-                            response = 'The 3D Cup Shuffle game is simple: watch as the cups shuffle in 3D, then select the one you think contains the ball. Correct guesses earn points and increase your streak. The game gets harder as you progress with faster shuffles.';
+                            response = 'Watch closely as the cups shuffle in 3D, then click the cup you think hides the ball. Get it right to score and climb a level - each level shuffles faster and can add more cups!';
                             break;
                         case 'winning-tips':
-                            response = 'Focus on one cup from the start and try to track it through the 3D shuffles. The middle cup is often the hardest to track, so pay extra attention to it. Watch for the subtle 3D rotation effects that can help you track the cups.';
+                            response = "Pick one cup and follow it with your eyes through every swap instead of trying to track them all. As levels get faster, lock onto the ball's cup the instant before the shuffle begins.";
                             break;
                         case 'scoring-system':
-                            response = 'You earn 10 points times the current round for each correct guess. Your streak increases with consecutive correct guesses, and every correct guess advances you to the next round. Higher rounds have faster shuffles but also give more points.';
+                            response = 'Each correct guess earns 10 times your current round in points and grows your streak. A wrong guess resets the streak. Levels escalate from Slowest all the way to Insane as you climb the rounds!';
                             break;
                     }
-                    
+
                     const messageDiv = document.createElement('div');
                     messageDiv.className = 'bot-message';
                     messages.appendChild(messageDiv);
-                    
-                    // Show typing indicator
+
                     const typingIndicator = document.createElement('div');
                     typingIndicator.className = 'bot-message';
                     typingIndicator.innerHTML = '<p>MO11 is typing<span class="typing-cursor"></span></p>';
                     messages.appendChild(typingIndicator);
                     messages.scrollTop = messages.scrollHeight;
-                    
-                    // Remove typing indicator and type the actual message
+
                     setTimeout(() => {
                         messages.removeChild(typingIndicator);
                         typeMessage(response, messageDiv);
                     }, 1000);
                 });
             });
-            
-            // Create background particles
+
             function createParticles() {
                 const particlesContainer = document.getElementById('particles');
                 const particleCount = 30;
-                
+
                 for (let i = 0; i < particleCount; i++) {
                     const particle = document.createElement('div');
                     particle.className = 'particle';
-                    
+
                     const size = Math.random() * 5 + 2;
                     particle.style.width = `${size}px`;
                     particle.style.height = `${size}px`;
-                    
                     particle.style.left = `${Math.random() * 100}%`;
                     particle.style.top = `${Math.random() * 100}%`;
-                    
                     particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
                     particle.style.animationDelay = `${Math.random() * 5}s`;
-                    
+
                     particlesContainer.appendChild(particle);
                 }
             }
-            
-            // Handle window resize for better responsiveness
-            function handleResize() {
-                // Recreate balls to reposition them correctly
-                createBalls();
-            }
-            
-            // ===== INITIALIZATION =====
-            initGame();
+
+            // ===== INIT =====
+            updateUI();
+            setupRoundBoard();
             createParticles();
-            
-            // Add resize listener
-            window.addEventListener('resize', handleResize);
         });
     </script>
 </body>
