@@ -1116,7 +1116,7 @@
                         <div class="mode-options">
                             <div class="mode-option selected" data-mode="vsComputer">
                                 <i class="fas fa-robot"></i>
-                                <span>VS Computer</span>
+                                <span>VS AI</span>
                             </div>
                             <div class="mode-option" data-mode="twoPlayer">
                                 <i class="fas fa-users"></i>
@@ -1242,6 +1242,9 @@
             let multiCapturePiece = null;
             let lastMoveFrom = null;
             let gameMode = 'vsComputer'; // 'vsComputer' or 'twoPlayer'
+
+            // Queue of remaining steps for the AI's currently-in-progress multi-jump turn
+            let computerTurnQueue = [];
             
             // Board dimensions
             const boardSize = 8;
@@ -1271,7 +1274,7 @@
                 // Update player labels based on game mode
                 if (gameMode === 'vsComputer') {
                     player1LabelElement.textContent = 'PLAYER';
-                    player2LabelElement.textContent = 'COMPUTER';
+                    player2LabelElement.textContent = 'AI';
                 } else {
                     player1LabelElement.textContent = 'PLAYER 1';
                     player2LabelElement.textContent = 'PLAYER 2';
@@ -1317,6 +1320,7 @@
                 multiCaptureActive = false;
                 multiCapturePiece = null;
                 lastMoveFrom = null;
+                computerTurnQueue = [];
                 gameActive = true;
             }
             
@@ -1424,7 +1428,7 @@
                     if (currentPlayer === player1Color) {
                         playerText = multiCaptureActive ? 'Continue Capturing!' : 'Your Turn';
                     } else {
-                        playerText = multiCaptureActive ? 'Computer Capturing...' : 'Computer Thinking...';
+                        playerText = multiCaptureActive ? 'AI Capturing...' : 'AI Thinking...';
                     }
                 } else {
                     if (currentPlayer === player1Color) {
@@ -1544,7 +1548,9 @@
                 return getRegularMoves(row, col, piece);
             }
             
-            function getRegularMoves(row, col, piece) {
+            // bd defaults to the live global board so all existing call sites keep working unchanged,
+            // while AI search code can pass in a simulated board instead.
+            function getRegularMoves(row, col, piece, bd = board) {
                 const moves = [];
                 const directions = [];
                 
@@ -1562,7 +1568,7 @@
                     
                     // For kings, check all positions along the diagonal
                     while (piece.isKing && isValidPosition(newRow, newCol)) {
-                        if (board[newRow][newCol] === null) {
+                        if (bd[newRow][newCol] === null) {
                             moves.push({ row: newRow, col: newCol, isCapture: false });
                             newRow += dr;
                             newCol += dc;
@@ -1572,7 +1578,7 @@
                     }
                     
                     // For regular pieces, only check adjacent position
-                    if (!piece.isKing && isValidPosition(newRow, newCol) && board[newRow][newCol] === null) {
+                    if (!piece.isKing && isValidPosition(newRow, newCol) && bd[newRow][newCol] === null) {
                         moves.push({ row: newRow, col: newCol, isCapture: false });
                     }
                 }
@@ -1580,7 +1586,7 @@
                 return moves;
             }
             
-            function getCaptureMoves(row, col, piece) {
+            function getCaptureMoves(row, col, piece, bd = board) {
                 const moves = [];
                 const directions = [];
                 
@@ -1601,14 +1607,14 @@
                         
                         // Look for an opponent piece to capture
                         while (isValidPosition(currentRow, currentCol)) {
-                            if (board[currentRow][currentCol] !== null) {
-                                if (board[currentRow][currentCol].color !== piece.color) {
+                            if (bd[currentRow][currentCol] !== null) {
+                                if (bd[currentRow][currentCol].color !== piece.color) {
                                     foundOpponent = true;
                                     // Now look for an empty space after the opponent
                                     let jumpRow = currentRow + dr;
                                     let jumpCol = currentCol + dc;
                                     
-                                    while (isValidPosition(jumpRow, jumpCol) && board[jumpRow][jumpCol] === null) {
+                                    while (isValidPosition(jumpRow, jumpCol) && bd[jumpRow][jumpCol] === null) {
                                         moves.push({ 
                                             row: jumpRow, 
                                             col: jumpCol, 
@@ -1635,10 +1641,10 @@
                         const captureCol = col + dc;
                         
                         if (isValidPosition(jumpRow, jumpCol) && 
-                            board[jumpRow][jumpCol] === null &&
+                            bd[jumpRow][jumpCol] === null &&
                             isValidPosition(captureRow, captureCol) &&
-                            board[captureRow][captureCol] !== null &&
-                            board[captureRow][captureCol].color !== piece.color) {
+                            bd[captureRow][captureCol] !== null &&
+                            bd[captureRow][captureCol].color !== piece.color) {
                             
                             moves.push({ 
                                 row: jumpRow, 
@@ -1656,6 +1662,159 @@
             
             function isValidPosition(row, col) {
                 return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+            }
+
+            // ===== AI SEARCH ENGINE =====
+            // Deep-copies a board so simulated moves never touch the live game state.
+            function cloneBoard(bd) {
+                return bd.map(row => row.map(cell => cell ? { ...cell } : null));
+            }
+
+            function promoteIfNeeded(bd, row, col) {
+                const piece = bd[row][col];
+                if (piece && !piece.isKing) {
+                    if ((piece.color === 'white' && row === boardSize - 1) ||
+                        (piece.color === 'black' && row === 0)) {
+                        piece.isKing = true;
+                    }
+                }
+            }
+
+            // Enumerates every full multi-jump chain starting from one piece.
+            function getCaptureSequences(bd, row, col) {
+                const results = [];
+
+                function recurse(curBoard, curRow, curCol, steps) {
+                    const piece = curBoard[curRow][curCol];
+                    const caps = getCaptureMoves(curRow, curCol, piece, curBoard);
+                    if (caps.length === 0) {
+                        const finalBoard = cloneBoard(curBoard);
+                        promoteIfNeeded(finalBoard, curRow, curCol);
+                        results.push({ steps, board: finalBoard });
+                        return;
+                    }
+                    for (const cap of caps) {
+                        const newBoard = cloneBoard(curBoard);
+                        newBoard[cap.row][cap.col] = newBoard[curRow][curCol];
+                        newBoard[curRow][curCol] = null;
+                        newBoard[cap.captureRow][cap.captureCol] = null;
+                        recurse(newBoard, cap.row, cap.col, [...steps, {
+                            from: { row: curRow, col: curCol },
+                            to: { row: cap.row, col: cap.col },
+                            isCapture: true,
+                            captureRow: cap.captureRow,
+                            captureCol: cap.captureCol
+                        }]);
+                    }
+                }
+
+                recurse(bd, row, col, []);
+                return results;
+            }
+
+            // Returns every legal complete "turn" (a single move, or a full mandatory capture chain)
+            // available to a color on a given board, each with the resulting board state attached.
+            function getAllTurnsForColor(bd, color) {
+                const capturePieces = [];
+                for (let r = 0; r < boardSize; r++) {
+                    for (let c = 0; c < boardSize; c++) {
+                        const p = bd[r][c];
+                        if (p && p.color === color) {
+                            const caps = getCaptureMoves(r, c, p, bd);
+                            if (caps.length > 0) capturePieces.push({ r, c });
+                        }
+                    }
+                }
+
+                const turns = [];
+                if (capturePieces.length > 0) {
+                    for (const { r, c } of capturePieces) {
+                        turns.push(...getCaptureSequences(bd, r, c));
+                    }
+                } else {
+                    for (let r = 0; r < boardSize; r++) {
+                        for (let c = 0; c < boardSize; c++) {
+                            const p = bd[r][c];
+                            if (p && p.color === color) {
+                                const moves = getRegularMoves(r, c, p, bd);
+                                for (const m of moves) {
+                                    const newBoard = cloneBoard(bd);
+                                    newBoard[m.row][m.col] = newBoard[r][c];
+                                    newBoard[r][c] = null;
+                                    promoteIfNeeded(newBoard, m.row, m.col);
+                                    turns.push({
+                                        steps: [{ from: { row: r, col: c }, to: { row: m.row, col: m.col }, isCapture: false }],
+                                        board: newBoard
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                return turns;
+            }
+
+            // Simple positional evaluation from the AI's point of view.
+            function evaluateBoard(bd, aiColor) {
+                let score = 0;
+                for (let r = 0; r < boardSize; r++) {
+                    for (let c = 0; c < boardSize; c++) {
+                        const p = bd[r][c];
+                        if (!p) continue;
+                        let val = p.isKing ? 5 : 3;
+                        if (!p.isKing) {
+                            const advancement = p.color === 'white' ? r : (boardSize - 1 - r);
+                            val += advancement * 0.1;
+                        }
+                        if (c >= 2 && c <= 5) val += 0.05;
+                        score += (p.color === aiColor) ? val : -val;
+                    }
+                }
+                return score;
+            }
+
+            // Minimax with alpha-beta pruning, operating one full "turn" at a time.
+            function minimax(bd, colorToMove, depth, alpha, beta, aiColor) {
+                const turns = getAllTurnsForColor(bd, colorToMove);
+                if (turns.length === 0) {
+                    // The side to move has no legal turn: that side loses.
+                    return colorToMove === aiColor ? (-1000 - depth) : (1000 + depth);
+                }
+                if (depth <= 0) {
+                    return evaluateBoard(bd, aiColor);
+                }
+
+                const otherColor = colorToMove === 'white' ? 'black' : 'white';
+
+                if (colorToMove === aiColor) {
+                    let best = -Infinity;
+                    for (const turn of turns) {
+                        const val = minimax(turn.board, otherColor, depth - 1, alpha, beta, aiColor);
+                        if (val > best) best = val;
+                        if (best > alpha) alpha = best;
+                        if (alpha >= beta) break;
+                    }
+                    return best;
+                } else {
+                    let best = Infinity;
+                    for (const turn of turns) {
+                        const val = minimax(turn.board, otherColor, depth - 1, alpha, beta, aiColor);
+                        if (val < best) best = val;
+                        if (best < beta) beta = best;
+                        if (alpha >= beta) break;
+                    }
+                    return best;
+                }
+            }
+
+            // Search depth (in full turns) scales with the chosen difficulty level.
+            function getSearchDepthForLevel(level) {
+                switch (level) {
+                    case 2: return 2; // Medium
+                    case 3: return 4; // Hard
+                    case 4: return 6; // Expert
+                    default: return 0; // Easy - no lookahead, plays randomly
+                }
             }
             
             function handlePieceSelection(row, col) {
@@ -1769,6 +1928,7 @@
                 validMoves = [];
                 multiCaptureActive = false;
                 multiCapturePiece = null;
+                computerTurnQueue = [];
                 
                 // Switch player
                 currentPlayer = currentPlayer === player1Color ? player2Color : player1Color;
@@ -1789,77 +1949,71 @@
             function computerMove() {
                 if (!gameActive || currentPlayer !== player2Color || gameMode !== 'vsComputer') return;
                 
-                // Handle multi-capture for computer
+                // Continuing a multi-jump chain that was already planned out
                 if (multiCaptureActive && multiCapturePiece) {
                     const { row, col } = multiCapturePiece;
                     const piece = board[row][col];
                     const captureMoves = getCaptureMoves(row, col, piece);
                     
-                    if (captureMoves.length > 0) {
-                        // Continue the multi-capture
-                        const selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-                        makeMove(
-                            row, col, 
-                            selectedMove.row, selectedMove.col, 
-                            selectedMove.isCapture,
-                            selectedMove.captureRow,
-                            selectedMove.captureCol
-                        );
-                        return;
-                    } else {
-                        // End multi-capture and switch turns
+                    if (captureMoves.length === 0) {
+                        // Nothing left to capture with this piece; end turn
                         multiCaptureActive = false;
                         multiCapturePiece = null;
+                        computerTurnQueue = [];
                         currentPlayer = player1Color;
                         drawBoard();
                         return;
                     }
-                }
-                
-                // Find all possible moves for computer
-                const allMoves = [];
-                for (let row = 0; row < boardSize; row++) {
-                    for (let col = 0; col < boardSize; col++) {
-                        const piece = board[row][col];
-                        if (piece && piece.color === player2Color) {
-                            const moves = getValidMoves(row, col);
-                            for (const move of moves) {
-                                allMoves.push({
-                                    fromRow: row,
-                                    fromCol: col,
-                                    toRow: move.row,
-                                    toCol: move.col,
-                                    isCapture: move.isCapture,
-                                    captureRow: move.captureRow,
-                                    captureCol: move.captureCol
-                                });
-                            }
-                        }
+
+                    let nextStep = computerTurnQueue.length > 0 ? computerTurnQueue.shift() : null;
+
+                    // Safety net: if the planned continuation is no longer valid (shouldn't normally
+                    // happen), just fall back to a legal capture so the game never gets stuck.
+                    const stepIsValid = nextStep && captureMoves.some(m =>
+                        m.row === nextStep.to.row && m.col === nextStep.to.col &&
+                        m.captureRow === nextStep.captureRow && m.captureCol === nextStep.captureCol);
+
+                    if (!stepIsValid) {
+                        const fallback = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+                        nextStep = { to: { row: fallback.row, col: fallback.col }, isCapture: true, captureRow: fallback.captureRow, captureCol: fallback.captureCol };
+                        computerTurnQueue = [];
                     }
+
+                    makeMove(row, col, nextStep.to.row, nextStep.to.col, true, nextStep.captureRow, nextStep.captureCol);
+                    return;
                 }
                 
-                if (allMoves.length === 0) {
+                // Plan a brand-new turn
+                const turns = getAllTurnsForColor(board, player2Color);
+                
+                if (turns.length === 0) {
                     endGame();
                     return;
                 }
                 
-                // Prioritize capture moves
-                const captureMoves = allMoves.filter(move => move.isCapture);
-                const movesToUse = captureMoves.length > 0 ? captureMoves : allMoves;
+                let chosenTurn;
+                if (gameLevel === 1) {
+                    // Easy: no lookahead, just pick among legal turns (captures still mandatory)
+                    chosenTurn = turns[Math.floor(Math.random() * turns.length)];
+                } else {
+                    const depth = getSearchDepthForLevel(gameLevel);
+                    let bestVal = -Infinity;
+                    let candidates = [];
+                    for (const turn of turns) {
+                        const val = minimax(turn.board, player1Color, depth - 1, -Infinity, Infinity, player2Color);
+                        if (val > bestVal) {
+                            bestVal = val;
+                            candidates = [turn];
+                        } else if (val === bestVal) {
+                            candidates.push(turn);
+                        }
+                    }
+                    chosenTurn = candidates[Math.floor(Math.random() * candidates.length)];
+                }
                 
-                // Select a random move
-                const selectedMove = movesToUse[Math.floor(Math.random() * movesToUse.length)];
-                
-                // Make the selected move
-                makeMove(
-                    selectedMove.fromRow, 
-                    selectedMove.fromCol, 
-                    selectedMove.toRow, 
-                    selectedMove.toCol, 
-                    selectedMove.isCapture,
-                    selectedMove.captureRow,
-                    selectedMove.captureCol
-                );
+                computerTurnQueue = chosenTurn.steps.slice(1);
+                const first = chosenTurn.steps[0];
+                makeMove(first.from.row, first.from.col, first.to.row, first.to.col, first.isCapture, first.captureRow, first.captureCol);
             }
             
             function isGameOver() {
@@ -1883,10 +2037,10 @@
                 const isPlayer1Win = winner === player1Color;
                 
                 if (gameMode === 'vsComputer') {
-                    gameResultElement.textContent = isPlayer1Win ? 'You Win!' : 'Computer Wins!';
+                    gameResultElement.textContent = isPlayer1Win ? 'You Win!' : 'AI Wins!';
                     gameResultTextElement.textContent = isPlayer1Win ? 
-                        'Congratulations! You outsmarted the computer.' : 
-                        'The computer was too strong this time. Try again!';
+                        'Congratulations! You outsmarted the AI.' : 
+                        'The AI was too strong this time. Try again!';
                 } else {
                     gameResultElement.textContent = isPlayer1Win ? 'Player 1 Wins!' : 'Player 2 Wins!';
                     gameResultTextElement.textContent = isPlayer1Win ? 
@@ -1935,6 +2089,7 @@
                 // Restore multi-capture state
                 multiCaptureActive = lastMove.multiCaptureActive;
                 multiCapturePiece = lastMove.multiCapturePiece;
+                computerTurnQueue = [];
                 
                 // Update last move from position
                 if (moveHistory.length > 0) {
@@ -2066,6 +2221,14 @@
                 gameSetupModal.style.display = 'none';
                 player1Score = 0;
                 player2Score = 0;
+                levelElement.textContent = gameLevel;
+                if (gameMode === 'vsComputer') {
+                    player1LabelElement.textContent = 'PLAYER';
+                    player2LabelElement.textContent = 'AI';
+                } else {
+                    player1LabelElement.textContent = 'PLAYER 1';
+                    player2LabelElement.textContent = 'PLAYER 2';
+                }
                 initializeBoard();
                 drawBoard();
             });
