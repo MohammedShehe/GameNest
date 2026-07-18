@@ -6,6 +6,8 @@
     <link rel="icon" href="assets/images/logo.png" type="image/png">
     <title>Checkers Game - GameNest</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PeerJS for P2P connection -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <style>
         /* CSS Variables */
         :root {
@@ -224,6 +226,255 @@
             letter-spacing: 1px;
             position: relative;
             z-index: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        /* Online Section Styles */
+        .online-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border: 1px solid var(--card-glow);
+            max-width: 550px;
+            width: 100%;
+        }
+
+        .online-section h3 {
+            color: #a29bfe;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .username-field {
+            margin-bottom: 14px;
+        }
+
+        .username-field label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .username-input {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 18px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-glow);
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .username-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 400;
+        }
+
+        .username-input:focus {
+            outline: none;
+            border-color: #a29bfe;
+            box-shadow: 0 0 20px rgba(162, 155, 254, 0.3);
+        }
+
+        .username-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .online-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .online-controls .control-btn {
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+            padding: 12px 20px;
+        }
+
+        .online-controls .control-btn.host {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+            border: none;
+        }
+
+        .online-controls .control-btn.host:hover {
+            box-shadow: 0 12px 30px rgba(108, 92, 231, 0.6);
+        }
+
+        .online-controls .control-btn.join {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+            border: none;
+        }
+
+        .online-controls .control-btn.join:hover {
+            box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        .online-controls .control-btn:disabled,
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .room-code-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin: 12px 0;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fdcb6e;
+            letter-spacing: 3px;
+            border: 2px dashed rgba(253, 203, 110, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .copy-code-btn {
+            background: rgba(253, 203, 110, 0.15);
+            border: 1px solid rgba(253, 203, 110, 0.4);
+            color: #fdcb6e;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .copy-code-btn:hover {
+            background: rgba(253, 203, 110, 0.3);
+            transform: scale(1.1);
+        }
+
+        .room-code-input {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 18px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-glow);
+            color: white;
+            font-size: 1.2rem;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 3px;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        .room-code-input:focus {
+            outline: none;
+            border-color: #00b894;
+            box-shadow: 0 0 20px rgba(0, 184, 148, 0.3);
+        }
+
+        .connection-status {
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .connection-status.connecting {
+            background: rgba(253, 203, 110, 0.2);
+            color: #fdcb6e;
+            border: 1px solid rgba(253, 203, 110, 0.3);
+        }
+
+        .connection-status.connecting .status-spinner {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(253, 203, 110, 0.3);
+            border-top-color: #fdcb6e;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 184, 148, 0.2);
+            color: #00b894;
+            border: 1px solid rgba(0, 184, 148, 0.3);
+        }
+
+        .connection-status.disconnected {
+            background: rgba(225, 112, 85, 0.2);
+            color: #e17055;
+            border: 1px solid rgba(225, 112, 85, 0.3);
+        }
+
+        .player-info {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .player-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.05);
+            max-width: 220px;
+        }
+
+        .player-indicator span:last-child {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-indicator .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        .player-indicator .color-dot.white-dot {
+            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
+        }
+
+        .player-indicator .color-dot.black-dot {
+            background: linear-gradient(135deg, #2d3436, #636e72);
         }
 
         .game-area {
@@ -291,6 +542,16 @@
 
         .control-btn.primary:hover {
             box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        .control-btn.danger {
+            background: linear-gradient(135deg, #e17055, #d63031);
+            box-shadow: 0 8px 25px rgba(225, 112, 85, 0.4);
+            border: none;
+        }
+
+        .control-btn.danger:hover {
+            box-shadow: 0 12px 30px rgba(225, 112, 85, 0.6);
         }
 
         .game-instructions {
@@ -885,6 +1146,21 @@
                 width: 55px;
                 height: 55px;
             }
+
+            .online-section {
+                padding: 15px;
+            }
+
+            .online-controls .control-btn {
+                min-width: 100px;
+                font-size: 0.9rem;
+                padding: 10px 15px;
+            }
+
+            .room-code-display {
+                font-size: 1.4rem;
+                padding: 12px 15px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -951,6 +1227,35 @@
             
             .fixed-exit-btn {
                 right: 15px;
+            }
+
+            .online-section {
+                padding: 12px 15px;
+            }
+
+            .online-section h3 {
+                font-size: 1rem;
+            }
+
+            .online-controls .control-btn {
+                min-width: 80px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .room-code-display {
+                font-size: 1.2rem;
+                padding: 10px 12px;
+            }
+
+            .player-indicator {
+                font-size: 0.85rem;
+                padding: 6px 12px;
+            }
+
+            .player-indicator .color-dot {
+                width: 16px;
+                height: 16px;
             }
         }
 
@@ -1039,6 +1344,69 @@
         <main class="checkers-game-container">
             <div class="game-header">
                 <h2 class="game-title">Checkers Challenge</h2>
+                
+                <!-- Online Multiplayer Section -->
+                <div class="online-section">
+                    <h3><i class="fas fa-globe"></i> Online Multiplayer</h3>
+
+                    <div class="username-field">
+                        <label for="usernameInput"><i class="fas fa-user"></i> Your Username</label>
+                        <input type="text" class="username-input" id="usernameInput"
+                               placeholder="Enter your username..." maxlength="16">
+                    </div>
+                    
+                    <div class="online-controls">
+                        <button class="control-btn host" id="btnHostGame">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Host Game</span>
+                        </button>
+                        <button class="control-btn join" id="btnJoinGame">
+                            <i class="fas fa-user-friends"></i>
+                            <span>Join Game</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Room Code Display (for host) -->
+                    <div id="roomCodeContainer" style="display: none;">
+                        <div class="room-code-display">
+                            <span id="roomCodeText">------</span>
+                            <button class="copy-code-btn" id="btnCopyCode" title="Copy room code">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p style="font-size: 0.85rem; opacity: 0.7; text-align: center; margin-top: 5px;">
+                            <i class="fas fa-info-circle"></i> Share this code with your friend to join
+                        </p>
+                    </div>
+                    
+                    <!-- Join Input -->
+                    <div id="joinContainer" style="display: none; margin-top: 10px;">
+                        <input type="text" class="room-code-input" id="roomCodeInput" 
+                               placeholder="Enter room code..." maxlength="6" style="text-transform: uppercase;">
+                        <button class="control-btn primary" id="btnConnect" style="margin-top: 10px; width: 100%;">
+                            <i class="fas fa-link"></i>
+                            <span>Connect</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Connection Status -->
+                    <div id="connectionStatus" class="connection-status" style="display: none;"></div>
+                    
+                    <!-- Player Info -->
+                    <div id="playerInfo" style="display: none; margin-top: 10px;">
+                        <div class="player-info">
+                            <div class="player-indicator">
+                                <span class="color-dot" id="yourColorDot"></span>
+                                <span id="yourColorLabel">-</span>
+                            </div>
+                            <div class="player-indicator">
+                                <span class="color-dot" id="opponentColorDot"></span>
+                                <span id="opponentColorLabel">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="game-stats">
                     <div class="stat">
                         <div class="stat-value" id="player1Score">0</div>
@@ -1071,6 +1439,10 @@
                 <button class="control-btn" id="btnHint">
                     <i class="fas fa-lightbulb"></i>
                     <span>Hint</span>
+                </button>
+                <button class="control-btn danger" id="btnDisconnect" style="display: none;">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Disconnect</span>
                 </button>
             </div>
 
@@ -1111,7 +1483,7 @@
             <div class="setup-content">
                 <h2>Game Setup</h2>
                 <div class="setup-options">
-                    <div class="option-group">
+                    <div class="option-group" id="modeGroup">
                         <label>Choose Game Mode:</label>
                         <div class="mode-options">
                             <div class="mode-option selected" data-mode="vsComputer">
@@ -1225,6 +1597,7 @@
             const gameResultTextElement = document.getElementById('gameResultText');
             const finalScoreElement = document.getElementById('finalScore');
             const difficultyGroup = document.getElementById('difficultyGroup');
+            const modeGroup = document.getElementById('modeGroup');
             
             // Game state
             let board = [];
@@ -1241,7 +1614,7 @@
             let multiCaptureActive = false;
             let multiCapturePiece = null;
             let lastMoveFrom = null;
-            let gameMode = 'vsComputer'; // 'vsComputer' or 'twoPlayer'
+            let gameMode = 'vsComputer'; // 'vsComputer', 'twoPlayer', or 'online'
 
             // Queue of remaining steps for the AI's currently-in-progress multi-jump turn
             let computerTurnQueue = [];
@@ -1253,6 +1626,19 @@
             
             // Bot typing state
             let isBotTyping = false;
+            
+            // Online multiplayer variables
+            let isOnlineGame = false;
+            let isHost = false;
+            let peer = null;
+            let connection = null;
+            let roomCode = '';
+            let isMyTurn = false;
+            let myColor = 'black';
+            let opponentColor = 'white';
+            let myUsername = '';
+            let opponentUsername = '';
+            const PEER_ID_PREFIX = 'gamenest-checkers-';
             
             // ===== GAME FUNCTIONS =====
             function initGame() {
@@ -1272,7 +1658,10 @@
                 levelElement.textContent = gameLevel;
                 
                 // Update player labels based on game mode
-                if (gameMode === 'vsComputer') {
+                if (gameMode === 'online') {
+                    player1LabelElement.textContent = (isHost ? myUsername : opponentUsername) || 'HOST';
+                    player2LabelElement.textContent = (isHost ? opponentUsername : myUsername) || 'GUEST';
+                } else if (gameMode === 'vsComputer') {
                     player1LabelElement.textContent = 'PLAYER';
                     player2LabelElement.textContent = 'AI';
                 } else {
@@ -1424,7 +1813,14 @@
                 
                 // Draw current player indicator
                 let playerText = '';
-                if (gameMode === 'vsComputer') {
+                if (gameMode === 'online') {
+                    if (currentPlayer === myColor) {
+                        playerText = multiCaptureActive ? 'Continue Capturing!' : 'Your Turn';
+                    } else {
+                        const oppName = opponentUsername || 'Opponent';
+                        playerText = multiCaptureActive ? (oppName + ' Capturing...') : (oppName + '\'s Turn');
+                    }
+                } else if (gameMode === 'vsComputer') {
                     if (currentPlayer === player1Color) {
                         playerText = multiCaptureActive ? 'Continue Capturing!' : 'Your Turn';
                     } else {
@@ -1822,6 +2218,15 @@
                 // In vsComputer mode, only player1 (human) can select pieces
                 if (!gameActive) return;
                 
+                // In online mode, only allow moves if it's your turn
+                if (gameMode === 'online' && !isMyTurn) return;
+                
+                // In online mode, only allow selecting your own pieces
+                if (gameMode === 'online') {
+                    const piece = board[row][col];
+                    if (!piece || piece.color !== myColor) return;
+                }
+                
                 if (gameMode === 'vsComputer' && currentPlayer !== player1Color) return;
                 
                 const piece = board[row][col];
@@ -1896,6 +2301,11 @@
                         multiCaptureActive = true;
                         multiCapturePiece = { row: toRow, col: toCol };
                         
+                        // For online mode, send the move to opponent
+                        if (gameMode === 'online' && connection) {
+                            sendMoveToOpponent(fromRow, fromCol, toRow, toCol, isCapture, captureRow, captureCol);
+                        }
+                        
                         // If it's the computer's turn, set up for the next capture
                         if (gameMode === 'vsComputer' && currentPlayer === player2Color) {
                             // For computer, we don't need to set selectedPiece, just continue the multi-capture
@@ -1938,6 +2348,13 @@
                 if (isGameOver()) {
                     endGame();
                     return;
+                }
+                
+                // For online mode, send the move to opponent
+                if (gameMode === 'online' && connection) {
+                    sendMoveToOpponent(fromRow, fromCol, toRow, toCol, isCapture, captureRow, captureCol);
+                    isMyTurn = false; // Wait for opponent's move
+                    updateConnectionStatus('Connected - Waiting for ' + (opponentUsername || 'opponent') + '...', 'connected');
                 }
                 
                 // Computer's turn (only in vsComputer mode)
@@ -2036,7 +2453,22 @@
                 const winner = currentPlayer === player1Color ? player2Color : player1Color;
                 const isPlayer1Win = winner === player1Color;
                 
-                if (gameMode === 'vsComputer') {
+                if (gameMode === 'online') {
+                    const isMyWin = winner === myColor;
+                    const oppName = opponentUsername || 'Opponent';
+                    const meName = myUsername || 'You';
+                    gameResultElement.textContent = isMyWin ? 'You Win!' : (oppName + ' Wins!');
+                    gameResultTextElement.textContent = isMyWin ?
+                        `Congratulations ${meName}! You defeated ${oppName}.` :
+                        `${oppName} was too strong this time. Try again!`;
+                    
+                    // Send game over to opponent
+                    if (connection && connection.open) {
+                        connection.send({
+                            type: 'gameOver'
+                        });
+                    }
+                } else if (gameMode === 'vsComputer') {
                     gameResultElement.textContent = isPlayer1Win ? 'You Win!' : 'AI Wins!';
                     gameResultTextElement.textContent = isPlayer1Win ? 
                         'Congratulations! You outsmarted the AI.' : 
@@ -2062,6 +2494,12 @@
             
             function undoMove() {
                 if (moveHistory.length === 0 || !gameActive) return;
+                
+                // Don't allow undo in online mode
+                if (gameMode === 'online') {
+                    alert('Undo is not available in online mode.');
+                    return;
+                }
                 
                 const lastMove = moveHistory.pop();
                 
@@ -2109,6 +2547,12 @@
             function showHint() {
                 if (!gameActive || (gameMode === 'vsComputer' && currentPlayer !== player1Color)) return;
                 
+                // Don't allow hint in online mode
+                if (gameMode === 'online') {
+                    alert('Hint is not available in online mode.');
+                    return;
+                }
+                
                 // Find all possible moves for current player
                 const allMoves = [];
                 for (let row = 0; row < boardSize; row++) {
@@ -2152,6 +2596,316 @@
                 }, 2000);
             }
             
+            // ===== ONLINE FUNCTIONS =====
+            function getUsername() {
+                return document.getElementById('usernameInput').value.trim();
+            }
+            
+            function sendMoveToOpponent(fromRow, fromCol, toRow, toCol, isCapture, captureRow, captureCol) {
+                if (connection && connection.open) {
+                    connection.send({
+                        type: 'move',
+                        fromRow, fromCol, toRow, toCol,
+                        isCapture, captureRow, captureCol,
+                        moveHistory: moveHistory,
+                        player1Score: player1Score,
+                        player2Score: player2Score,
+                        currentPlayer: currentPlayer,
+                        boardState: board
+                    });
+                }
+            }
+            
+            function handleOpponentMove(data) {
+                // Apply the move to our board
+                const { fromRow, fromCol } = data;
+                
+                // Restore board state from opponent
+                board = data.boardState;
+                moveHistory = data.moveHistory;
+                player1Score = data.player1Score;
+                player2Score = data.player2Score;
+                currentPlayer = data.currentPlayer;
+                
+                // Update UI
+                player1ScoreElement.textContent = player1Score;
+                player2ScoreElement.textContent = player2Score;
+                lastMoveFrom = { row: fromRow, col: fromCol };
+                
+                // Check for game over
+                drawBoard();
+                
+                if (isGameOver()) {
+                    endGame();
+                    return;
+                }
+                
+                // It's now my turn
+                isMyTurn = true;
+                updateConnectionStatus('Connected - Your turn!', 'connected');
+            }
+            
+            function handleGameOverFromOpponent() {
+                gameActive = false;
+                playSound('gameOverSound');
+                const oppName = opponentUsername || 'Opponent';
+                const meName = myUsername || 'You';
+                gameResultElement.textContent = oppName + ' Wins!';
+                gameResultTextElement.textContent = `${oppName} won the game. Better luck next time, ${meName}!`;
+                finalScoreElement.textContent = opponentColor === 'white' ? player1Score : player2Score;
+                gameOverModal.classList.add('active');
+            }
+            
+            // ===== PEERJS CONNECTION FUNCTIONS =====
+            function generateRoomCode() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let code = '';
+                for (let i = 0; i < 6; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return code;
+            }
+            
+            function hostGame() {
+                const code = generateRoomCode();
+                roomCode = code;
+                const peerId = PEER_ID_PREFIX + code;
+                isHost = true;
+                isOnlineGame = true;
+                gameMode = 'online';
+                
+                document.getElementById('roomCodeText').textContent = roomCode;
+                document.getElementById('roomCodeContainer').style.display = 'block';
+                document.getElementById('joinContainer').style.display = 'none';
+                document.getElementById('btnHostGame').disabled = true;
+                document.getElementById('btnJoinGame').disabled = true;
+                document.getElementById('btnDisconnect').style.display = 'flex';
+                document.getElementById('usernameInput').disabled = true;
+                document.getElementById('playerInfo').style.display = 'none';
+                
+                updateConnectionStatus('<span class="status-spinner"></span> Waiting for opponent to join...', 'connecting');
+                
+                peer = new Peer(peerId, { debug: 1 });
+                
+                peer.on('open', function(id) {
+                    console.log('Peer opened with ID:', id);
+                });
+                
+                peer.on('connection', function(conn) {
+                    connection = conn;
+                    setupConnection();
+                });
+                
+                peer.on('disconnected', function() {
+                    if (peer && !peer.destroyed) {
+                        peer.reconnect();
+                    }
+                });
+                
+                peer.on('error', function(err) {
+                    console.error('Peer error:', err);
+                    let msg = 'Connection error: ' + err.message;
+                    if (err.type === 'unavailable-id') {
+                        msg = 'That room code is already taken. Please try hosting again.';
+                    }
+                    updateConnectionStatus(msg, 'disconnected');
+                    resetOnlineUI();
+                });
+            }
+            
+            function joinGame(code) {
+                roomCode = code.toUpperCase();
+                const peerId = PEER_ID_PREFIX + roomCode;
+                isHost = false;
+                isOnlineGame = true;
+                gameMode = 'online';
+                
+                document.getElementById('roomCodeContainer').style.display = 'none';
+                document.getElementById('joinContainer').style.display = 'none';
+                document.getElementById('btnHostGame').disabled = true;
+                document.getElementById('btnJoinGame').disabled = true;
+                document.getElementById('btnDisconnect').style.display = 'flex';
+                document.getElementById('usernameInput').disabled = true;
+                document.getElementById('playerInfo').style.display = 'none';
+                
+                updateConnectionStatus('<span class="status-spinner"></span> Connecting to game...', 'connecting');
+                
+                peer = new Peer({ debug: 1 });
+                
+                let connectedSuccessfully = false;
+                const connectTimeout = setTimeout(function() {
+                    if (!connectedSuccessfully) {
+                        updateConnectionStatus('Could not find that room. Check the code and try again.', 'disconnected');
+                        resetOnlineUI();
+                    }
+                }, 15000);
+                
+                peer.on('open', function() {
+                    connection = peer.connect(peerId, { reliable: true });
+                    
+                    connection.on('open', function() {
+                        connectedSuccessfully = true;
+                        clearTimeout(connectTimeout);
+                    });
+                    
+                    setupConnection();
+                });
+                
+                peer.on('disconnected', function() {
+                    if (peer && !peer.destroyed) {
+                        peer.reconnect();
+                    }
+                });
+                
+                peer.on('error', function(err) {
+                    clearTimeout(connectTimeout);
+                    console.error('Peer error:', err);
+                    let msg = 'Connection error: ' + err.message;
+                    if (err.type === 'peer-unavailable') {
+                        msg = 'Room not found. Check the code and try again.';
+                    }
+                    updateConnectionStatus(msg, 'disconnected');
+                    resetOnlineUI();
+                });
+            }
+            
+            function setupConnection() {
+                connection.on('open', function() {
+                    if (isHost) {
+                        // Host already picked a color during setup; assign turn order and
+                        // share it with the guest via a handshake message.
+                        myColor = player1Color;
+                        opponentColor = player1Color === 'white' ? 'black' : 'white';
+                        player2Color = opponentColor;
+                        currentPlayer = player1Color; // host always moves first
+                        isMyTurn = true;
+                        
+                        updateConnectionStatus('<span class="status-spinner"></span> Connected! Syncing player info...', 'connecting');
+                        
+                        connection.send({
+                            type: 'hello',
+                            username: myUsername || 'Host',
+                            player1Color: player1Color,
+                            player2Color: player2Color
+                        });
+                    } else {
+                        updateConnectionStatus('<span class="status-spinner"></span> Connected! Syncing player info...', 'connecting');
+                        connection.send({
+                            type: 'hello',
+                            username: myUsername || 'Guest'
+                        });
+                    }
+                });
+                
+                connection.on('data', function(data) {
+                    if (data.type === 'hello') {
+                        if (isHost) {
+                            opponentUsername = data.username || 'Guest';
+                            finalizeOnlineSetup();
+                        } else {
+                            opponentUsername = data.username || 'Host';
+                            player1Color = data.player1Color;
+                            player2Color = data.player2Color;
+                            myColor = player2Color;
+                            opponentColor = player1Color;
+                            currentPlayer = player1Color; // host starts
+                            isMyTurn = false;
+                            finalizeOnlineSetup();
+                        }
+                    } else if (data.type === 'move') {
+                        handleOpponentMove(data);
+                    } else if (data.type === 'gameOver') {
+                        handleGameOverFromOpponent();
+                    } else if (data.type === 'restart') {
+                        restartOnlineGame(true);
+                    }
+                });
+                
+                connection.on('error', function(err) {
+                    console.error('Connection error:', err);
+                    updateConnectionStatus('Connection error occurred.', 'disconnected');
+                });
+                
+                connection.on('close', function() {
+                    updateConnectionStatus('Opponent disconnected.', 'disconnected');
+                    resetOnlineUI();
+                });
+            }
+            
+            function finalizeOnlineSetup() {
+                document.getElementById('playerInfo').style.display = 'block';
+                document.getElementById('yourColorDot').className = 'color-dot ' + myColor + '-dot';
+                document.getElementById('opponentColorDot').className = 'color-dot ' + opponentColor + '-dot';
+                document.getElementById('yourColorLabel').textContent = (myUsername || 'You') + ' (You)';
+                document.getElementById('opponentColorLabel').textContent = opponentUsername || 'Opponent';
+                
+                player1Score = 0;
+                player2Score = 0;
+                initGame();
+                
+                updateConnectionStatus(
+                    'Connected - ' + (isMyTurn ? 'Your turn!' : (opponentUsername || 'Opponent') + '\'s turn...'),
+                    'connected'
+                );
+            }
+            
+            function updateConnectionStatus(message, type) {
+                const status = document.getElementById('connectionStatus');
+                status.style.display = 'flex';
+                status.innerHTML = message;
+                status.className = 'connection-status ' + type;
+            }
+            
+            function resetOnlineUI() {
+                if (connection) {
+                    try { connection.close(); } catch (e) {}
+                    connection = null;
+                }
+                if (peer) {
+                    try { peer.destroy(); } catch (e) {}
+                    peer = null;
+                }
+                isOnlineGame = false;
+                isHost = false;
+                gameActive = false;
+                gameMode = 'vsComputer';
+                player1Color = 'black';
+                player2Color = 'white';
+                opponentUsername = '';
+                
+                document.getElementById('btnDisconnect').style.display = 'none';
+                document.getElementById('btnHostGame').disabled = false;
+                document.getElementById('btnJoinGame').disabled = false;
+                document.getElementById('usernameInput').disabled = false;
+                document.getElementById('roomCodeContainer').style.display = 'none';
+                document.getElementById('joinContainer').style.display = 'none';
+                document.getElementById('playerInfo').style.display = 'none';
+                
+                initGame();
+            }
+            
+            function disconnectFromGame() {
+                if (connection && connection.open) {
+                    try { connection.send({ type: 'gameOver' }); } catch (e) {}
+                }
+                document.getElementById('connectionStatus').style.display = 'none';
+                resetOnlineUI();
+            }
+            
+            function restartOnlineGame(fromOpponent) {
+                if (!fromOpponent && connection && connection.open) {
+                    connection.send({ type: 'restart' });
+                }
+                player1Score = 0;
+                player2Score = 0;
+                initGame();
+                isMyTurn = (myColor === player1Color);
+                updateConnectionStatus(
+                    'Connected - Game restarted! ' + (isMyTurn ? 'Your turn!' : (opponentUsername || 'Opponent') + '\'s turn...'),
+                    'connected'
+                );
+            }
+            
             // Bot typing function
             function typeMessage(message, messageDiv, callback) {
                 if (isBotTyping) return;
@@ -2173,16 +2927,96 @@
                         isBotTyping = false;
                         if (callback) callback();
                     }
-                }, 30); // Adjust typing speed here (milliseconds per character)
+                }, 30);
             }
             
             // ===== EVENT LISTENERS =====
             document.getElementById('btnNewGame').addEventListener('click', function() {
-                gameSetupModal.style.display = 'flex';
+                if (gameMode === 'online') {
+                    if (connection && connection.open && confirm('This will restart the online game. Are you sure?')) {
+                        restartOnlineGame(false);
+                    }
+                } else {
+                    restoreSetupModalDefaults();
+                    gameSetupModal.style.display = 'flex';
+                }
             });
             
             document.getElementById('btnUndo').addEventListener('click', undoMove);
             document.getElementById('btnHint').addEventListener('click', showHint);
+            
+            // Online multiplayer buttons
+            document.getElementById('btnHostGame').addEventListener('click', function() {
+                const username = getUsername();
+                if (!username) {
+                    alert('Please enter your username first!');
+                    document.getElementById('usernameInput').focus();
+                    return;
+                }
+                myUsername = username;
+                
+                document.getElementById('roomCodeContainer').style.display = 'none';
+                document.getElementById('joinContainer').style.display = 'none';
+                
+                // Configure the setup modal to only ask for a color (mode is forced to online)
+                document.querySelector('.setup-content h2').textContent = 'Choose Your Color';
+                modeGroup.style.display = 'none';
+                difficultyGroup.style.display = 'none';
+                document.querySelector('#btnStartGame span').textContent = 'Create Room';
+                gameSetupModal.dataset.pendingAction = 'host';
+                
+                gameSetupModal.style.display = 'flex';
+            });
+            
+            document.getElementById('btnJoinGame').addEventListener('click', function() {
+                const username = getUsername();
+                if (!username) {
+                    alert('Please enter your username first!');
+                    document.getElementById('usernameInput').focus();
+                    return;
+                }
+                myUsername = username;
+                
+                document.getElementById('roomCodeContainer').style.display = 'none';
+                document.getElementById('joinContainer').style.display = 'block';
+                document.getElementById('roomCodeInput').value = '';
+                document.getElementById('roomCodeInput').focus();
+            });
+            
+            document.getElementById('btnConnect').addEventListener('click', function() {
+                const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+                if (code.length !== 6) {
+                    alert('Please enter a valid 6-character room code');
+                    return;
+                }
+                joinGame(code);
+            });
+            
+            document.getElementById('roomCodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('btnConnect').click();
+                }
+            });
+            
+            document.getElementById('btnCopyCode').addEventListener('click', function() {
+                if (!roomCode) return;
+                const finish = () => {
+                    const icon = this.querySelector('i');
+                    icon.className = 'fas fa-check';
+                    setTimeout(() => { icon.className = 'fas fa-copy'; }, 1500);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(roomCode).then(finish).catch(() => {});
+                } else {
+                    finish();
+                }
+            });
+            
+            document.getElementById('btnDisconnect').addEventListener('click', function() {
+                if (confirm('Are you sure you want to disconnect from the online game?')) {
+                    disconnectFromGame();
+                }
+            });
             
             // Game mode selection
             document.querySelectorAll('.mode-option').forEach(option => {
@@ -2217,11 +3051,37 @@
                 });
             });
             
+            function restoreSetupModalDefaults() {
+                document.querySelector('.setup-content h2').textContent = 'Game Setup';
+                modeGroup.style.display = 'flex';
+                const selectedMode = document.querySelector('.mode-option.selected').getAttribute('data-mode');
+                difficultyGroup.style.display = (selectedMode === 'vsComputer') ? 'flex' : 'none';
+                document.querySelector('#btnStartGame span').textContent = 'Start Game';
+                delete gameSetupModal.dataset.pendingAction;
+            }
+            
             document.getElementById('btnStartGame').addEventListener('click', function() {
+                const pendingAction = gameSetupModal.dataset.pendingAction;
+                
+                if (pendingAction === 'host') {
+                    gameSetupModal.style.display = 'none';
+                    const selectedColor = document.querySelector('.color-option.selected');
+                    player1Color = selectedColor.getAttribute('data-color');
+                    player2Color = player1Color === 'white' ? 'black' : 'white';
+                    restoreSetupModalDefaults();
+                    hostGame();
+                    return;
+                }
+                
                 gameSetupModal.style.display = 'none';
+                const mode = document.querySelector('.mode-option.selected').getAttribute('data-mode');
+                gameMode = mode;
+                player1Color = document.querySelector('.color-option.selected').getAttribute('data-color');
+                player2Color = player1Color === 'white' ? 'black' : 'white';
                 player1Score = 0;
                 player2Score = 0;
                 levelElement.textContent = gameLevel;
+                
                 if (gameMode === 'vsComputer') {
                     player1LabelElement.textContent = 'PLAYER';
                     player2LabelElement.textContent = 'AI';
@@ -2229,25 +3089,44 @@
                     player1LabelElement.textContent = 'PLAYER 1';
                     player2LabelElement.textContent = 'PLAYER 2';
                 }
+                
+                isOnlineGame = false;
                 initializeBoard();
                 drawBoard();
             });
             
             document.getElementById('btnPlayAgain').addEventListener('click', function() {
                 gameOverModal.classList.remove('active');
-                initializeBoard();
-                drawBoard();
+                if (gameMode === 'online') {
+                    if (connection && connection.open) {
+                        restartOnlineGame(false);
+                    } else {
+                        resetOnlineUI();
+                    }
+                } else {
+                    initializeBoard();
+                    drawBoard();
+                }
             });
             
             document.getElementById('btnBackToGames').addEventListener('click', function() {
+                if (gameMode === 'online') {
+                    disconnectFromGame();
+                }
                 window.location.href = 'games.html';
             });
             
             document.getElementById('btnBack').addEventListener('click', function() {
+                if (gameMode === 'online') {
+                    disconnectFromGame();
+                }
                 window.location.href = 'games.html';
             });
             
             document.getElementById('btnExit').addEventListener('click', function() {
+                if (gameMode === 'online') {
+                    disconnectFromGame();
+                }
                 if (confirm('Are you sure you want to exit GameNest?')) {
                     window.location.href = 'index.html';
                 }
