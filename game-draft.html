@@ -2666,16 +2666,26 @@
                 return code;
             }
             
+            // Extra public STUN servers alongside PeerJS's defaults. STUN alone still
+            // won't get through every network (symmetric NAT, some corporate/mobile
+            // networks) - that needs a TURN relay, which requires a paid/credentialed
+            // provider (Twilio, Xirsys, Metered, etc.). If you have one, add it to this
+            // array, e.g. { urls: 'turn:your.turn.server:3478', username: '...', credential: '...' }.
+            const ICE_SERVERS = [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:global.stun.twilio.com:3478' }
+            ];
+            
             function hostGame() {
                 const code = generateRoomCode();
-                roomCode = code;
                 const peerId = PEER_ID_PREFIX + code;
                 isHost = true;
                 isOnlineGame = true;
                 gameMode = 'online';
                 
-                document.getElementById('roomCodeText').textContent = roomCode;
-                document.getElementById('roomCodeContainer').style.display = 'block';
+                document.getElementById('roomCodeContainer').style.display = 'none';
                 document.getElementById('joinContainer').style.display = 'none';
                 document.getElementById('btnHostGame').disabled = true;
                 document.getElementById('btnJoinGame').disabled = true;
@@ -2683,20 +2693,31 @@
                 document.getElementById('usernameInput').disabled = true;
                 document.getElementById('playerInfo').style.display = 'none';
                 
-                updateConnectionStatus('<span class="status-spinner"></span> Waiting for opponent to join...', 'connecting');
+                updateConnectionStatus('<span class="status-spinner"></span> Setting up your room...', 'connecting');
                 
-                peer = new Peer(peerId, { debug: 1 });
+                peer = new Peer(peerId, { debug: 2, config: { iceServers: ICE_SERVERS } });
                 
                 peer.on('open', function(id) {
-                    console.log('Peer opened with ID:', id);
+                    console.log('Host peer registered with ID:', id);
+                    // Only reveal the room code once the ID is actually confirmed with the
+                    // signaling server - otherwise a fast-typing guest could try to connect
+                    // before the room technically exists yet.
+                    roomCode = code;
+                    document.getElementById('roomCodeText').textContent = roomCode;
+                    document.getElementById('roomCodeContainer').style.display = 'block';
+                    updateConnectionStatus('Waiting for opponent to join...', 'connecting');
                 });
                 
                 peer.on('connection', function(conn) {
                     connection = conn;
+                    connection.peerConnection && connection.peerConnection.addEventListener('iceconnectionstatechange', function() {
+                        console.log('ICE connection state:', connection.peerConnection.iceConnectionState);
+                    });
                     setupConnection();
                 });
                 
                 peer.on('disconnected', function() {
+                    console.log('Host lost signaling connection, attempting reconnect...');
                     if (peer && !peer.destroyed) {
                         peer.reconnect();
                     }
@@ -2730,28 +2751,47 @@
                 
                 updateConnectionStatus('<span class="status-spinner"></span> Connecting to game...', 'connecting');
                 
-                peer = new Peer({ debug: 1 });
+                peer = new Peer({ debug: 2, config: { iceServers: ICE_SERVERS } });
                 
                 let connectedSuccessfully = false;
+                // Tracks whether we confirmed the room exists (host peer answered) even if
+                // the data channel itself never finishes opening - lets us tell "wrong code"
+                // apart from "found it, but the network won't let us connect directly".
+                let peerWasFound = false;
+                
                 const connectTimeout = setTimeout(function() {
-                    if (!connectedSuccessfully) {
-                        updateConnectionStatus('Could not find that room. Check the code and try again.', 'disconnected');
-                        resetOnlineUI();
+                    if (connectedSuccessfully) return;
+                    if (peerWasFound) {
+                        updateConnectionStatus(
+                            "Found the room, but couldn't establish a connection. This usually means one of you is on a network (mobile data, campus/office Wi-Fi, VPN) that blocks direct peer-to-peer connections. Try again on the same Wi-Fi network, or ask the host to try a different network.",
+                            'disconnected'
+                        );
+                    } else {
+                        updateConnectionStatus('Could not find that room. Double-check the code with the host and make sure they still have it open.', 'disconnected');
                     }
-                }, 15000);
+                    resetOnlineUI();
+                }, 20000);
                 
                 peer.on('open', function() {
                     connection = peer.connect(peerId, { reliable: true });
+                    peerWasFound = true; // connect() only throws peer-unavailable if the ID truly isn't registered
                     
                     connection.on('open', function() {
                         connectedSuccessfully = true;
                         clearTimeout(connectTimeout);
                     });
                     
+                    // Extra visibility into WebRTC's own negotiation, useful for diagnosing
+                    // NAT/firewall failures in the browser console.
+                    connection.peerConnection && connection.peerConnection.addEventListener('iceconnectionstatechange', function() {
+                        console.log('ICE connection state:', connection.peerConnection.iceConnectionState);
+                    });
+                    
                     setupConnection();
                 });
                 
                 peer.on('disconnected', function() {
+                    console.log('Guest lost signaling connection, attempting reconnect...');
                     if (peer && !peer.destroyed) {
                         peer.reconnect();
                     }
@@ -2762,7 +2802,7 @@
                     console.error('Peer error:', err);
                     let msg = 'Connection error: ' + err.message;
                     if (err.type === 'peer-unavailable') {
-                        msg = 'Room not found. Check the code and try again.';
+                        msg = 'Room not found. Double-check the code with the host and make sure they still have it open.';
                     }
                     updateConnectionStatus(msg, 'disconnected');
                     resetOnlineUI();
